@@ -1,0 +1,56 @@
+[
+  {
+    "branch_id": "BR001",
+    "sku_id": "EF001",
+    "stock_on_hand": 12,
+    "in_transit": 0,
+    "safety_stock": 10,
+    "avg_daily_sales": 32.1,
+    "last_updated": "2026-03-15T22:00:00Z"
+  },
+  {
+    "branch_id": "BR002",
+    "sku_id": "EF001",
+    "stock_on_hand": 28,
+    "in_transit": 8,
+    "safety_stock": 8,
+    "avg_daily_sales": 22.1,
+    "last_updated": "2026-03-15T22:00:00Z"
+  },
+  {
+    "branch_id": "BR003",
+    "sku_id": "EF001",
+    "stock_on_hand": 18,
+    "in_transit": 0,
+    "safety_stock": 8,
+    "avg_daily_sales": 29.7,
+    "last_updated": "2026-03-15T22:00:00Z"
+  },
+  {
+    "branch_id": "BR004",
+    "sku_id": "EF001",
+    "stock_on_hand": 20,
+    "in_transit": 0,
+    "safety_stock": 7,
+    "avg_daily_sales": 20.4,
+    "last_updated": "2026-03-15T22:00:00Z"
+  },
+  {
+    "branch_id": "BR005",
+    "sku_id": "EF001",
+    "stock_on_hand": 22,
+    "in_transit": 5,
+    "safety_stock": 7,
+    "avg_daily_sales": 17.9,
+    "last_updated": "2026-03-15T22:00:00Z"
+  },
+  {
+    "branch_id": "BR006",
+    "sku_id": "EF001",
+    "stock_on_hand": 9,
+    "in_transit": 0,
+    "safety_stock": 10,
+    "avg_daily_sales": 34.6,
+    "last_updated": "2026-03-15T22:00:00Z"
+  }
+]

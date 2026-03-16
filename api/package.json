@@ -1,0 +1,6 @@
+{
+  "name": "wesonline-api",
+  "version": "1.0.0",
+  "description": "Azure Function proxy for WesOnline chat",
+  "engines": { "node": ">=18" }
+}

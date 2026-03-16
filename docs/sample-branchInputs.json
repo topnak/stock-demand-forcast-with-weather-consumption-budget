@@ -1,0 +1,26 @@
+[
+  {
+    "branch_id": "BR001",
+    "branch_name": "Sydney Harbour Scoops",
+    "city": "Sydney",
+    "stock_on_hand": 74,
+    "in_transit": 20,
+    "safety_stock": 30,
+    "recent_7_day_avg_sales": 96,
+    "tomorrow_max_temp_c": 31,
+    "weather_condition": "Sunny",
+    "baseline_forecast_units": 117
+  },
+  {
+    "branch_id": "BR002",
+    "branch_name": "Melbourne Laneway Scoops",
+    "city": "Melbourne",
+    "stock_on_hand": 60,
+    "in_transit": 10,
+    "safety_stock": 25,
+    "recent_7_day_avg_sales": 70,
+    "tomorrow_max_temp_c": 26,
+    "weather_condition": "Partly Cloudy",
+    "baseline_forecast_units": 70
+  }
+]

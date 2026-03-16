@@ -1,0 +1,12 @@
+[
+  {
+    "sku_id": "EF001",
+    "name": "Pedestal Electric Fan 40cm",
+    "category": "Cooling Appliances",
+    "unit_price": 89.00,
+    "currency": "AUD",
+    "unit_of_measure": "unit",
+    "weight_grams": 4200,
+    "storage": "warehouse"
+  }
+]

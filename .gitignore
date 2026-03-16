@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+webapp/.env
+webapp/env.js
+
+# Logic Apps local settings (contains connection strings and keys)
+logicapps/**/local.settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vs/
+*.suo
+*.user
+
+# Build outputs
+dist/

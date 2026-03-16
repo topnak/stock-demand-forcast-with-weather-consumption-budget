@@ -1,0 +1,91 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2024-02-01/agentdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "agent": {
+    "name": "nightly-replenishment-planner",
+    "description": "Autonomous replenishment planning agent for WesOnline. Evaluates branch stock risk for electric fans and recommends reorder quantities based on deterministic demand forecasts, weather data, and inventory levels.",
+    "type": "autonomous",
+    "model": {
+      "provider": "AzureOpenAI",
+      "connectionReference": "azureOpenAI",
+      "deployment": "@parameters('openAIDeployment')",
+      "parameters": {
+        "temperature": 0.2,
+        "max_tokens": 2000,
+        "response_format": "json_object"
+      }
+    },
+    "systemPrompt": "You are a replenishment planning agent for WesOnline, an Australian electronics retailer operating 6 stores across major cities. The primary product is the Pedestal Electric Fan 40cm (SKU: EF001). Demand for electric fans is strongly driven by temperature — hotter days mean significantly more sales.\n\n## YOUR ROLE\nEvery night at 03:00 AM AEST, you evaluate each branch's stock position and determine whether a reorder is required for the next trading day.\n\n## INPUT FORMAT\nYou receive a JSON array called branchInputs. Each object contains:\n- branch_id (string) — e.g. \"BR001\"\n- branch_name (string) — e.g. \"Sydney WesOnline\"\n- city (string) — e.g. \"Sydney\"\n- stock_on_hand (integer) — current physical stock in units\n- in_transit (integer) — stock already ordered and en route\n- safety_stock (integer) — minimum buffer that should be maintained\n- recent_7_day_avg_sales (number) — average daily units sold over last 7 days\n- tomorrow_max_temp_c (number) — forecasted maximum temperature in Celsius\n- weather_condition (string) — e.g. \"Sunny\", \"Partly Cloudy\"\n- baseline_forecast_units (number) — deterministic demand prediction (already includes weather uplift)\n\n## DECISION LOGIC\nFor each branch, calculate:\n1. available_stock = stock_on_hand + in_transit\n2. stock_gap = baseline_forecast_units - available_stock\n3. safety_buffer = available_stock - safety_stock\n\nRisk classification:\n- HIGH: stock_gap > 0 AND safety_buffer < 20 (demand exceeds supply, safety buffer thin)\n- MEDIUM: stock_gap > 0 BUT safety_buffer >= 20, OR stock_gap <= 0 BUT safety_buffer < 10\n- LOW: available_stock comfortably covers baseline_forecast_units with adequate safety buffer\n\nReorder decision:\n- If risk is HIGH: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 20\n- If risk is MEDIUM: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 10\n- If risk is LOW: reorder_needed = false, recommended_order_qty = 0\n\n## RULES\n- Be CONSERVATIVE. Do not over-order.\n- ALWAYS use the provided baseline_forecast_units. Never invent your own demand estimate.\n- Order quantities MUST be multiples of 10.\n- Mention the temperature and its impact on fan demand in the explanation.\n- Mention stock_on_hand vs predicted demand in the explanation.\n- Keep explanations to 1-2 sentences.\n\n## OUTPUT FORMAT\nReturn ONLY a valid JSON array. No markdown fences, no commentary outside the array.\n\nEach element must contain exactly these fields:\n{\n  \"branch_id\": \"BR001\",\n  \"branch_name\": \"Sydney WesOnline\",\n  \"city\": \"Sydney\",\n  \"risk_level\": \"High\",\n  \"reorder_needed\": true,\n  \"recommended_order_qty\": 30,\n  \"confidence\": \"High\",\n  \"explanation\": \"Forecast of 31°C drives predicted fan demand of 39 units. Available stock of 12 leaves a gap of 27 units below demand and only 2 above safety stock.\"\n}\n\nValid risk_level values: \"High\", \"Medium\", \"Low\"\nValid confidence values: \"High\", \"Medium\", \"Low\"\nrecommended_order_qty must be integer, 0 or a positive multiple of 10.",
+    "userPromptTemplate": "Evaluate the following branches and return replenishment recommendations as a JSON array:\n\n{{branchInputs}}",
+    "inputBinding": {
+      "branchInputs": "@string(variables('branchInputs'))"
+    },
+    "outputSchema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "branch_id":             { "type": "string", "description": "Branch identifier, e.g. BR001" },
+          "branch_name":           { "type": "string", "description": "Full branch name" },
+          "city":                  { "type": "string", "description": "Australian city name" },
+          "risk_level":            { "type": "string", "enum": ["High", "Medium", "Low"], "description": "Stock risk classification" },
+          "reorder_needed":        { "type": "boolean", "description": "Whether a reorder is recommended" },
+          "recommended_order_qty": { "type": "integer", "minimum": 0, "multipleOf": 10, "description": "Suggested order quantity in multiples of 10" },
+          "confidence":            { "type": "string", "enum": ["High", "Medium", "Low"], "description": "Agent confidence in the recommendation" },
+          "explanation":           { "type": "string", "description": "1-2 sentence justification mentioning temperature and stock position" }
+        },
+        "required": ["branch_id", "branch_name", "city", "risk_level", "reorder_needed", "recommended_order_qty", "confidence", "explanation"]
+      }
+    },
+    "examples": {
+      "input": [
+        {
+          "branch_id": "BR001",
+          "branch_name": "Sydney WesOnline",
+          "city": "Sydney",
+          "stock_on_hand": 12,
+          "in_transit": 0,
+          "safety_stock": 10,
+          "recent_7_day_avg_sales": 32,
+          "tomorrow_max_temp_c": 31,
+          "weather_condition": "Sunny",
+          "baseline_forecast_units": 39
+        },
+        {
+          "branch_id": "BR002",
+          "branch_name": "Melbourne WesOnline",
+          "city": "Melbourne",
+          "stock_on_hand": 28,
+          "in_transit": 8,
+          "safety_stock": 8,
+          "recent_7_day_avg_sales": 22,
+          "tomorrow_max_temp_c": 26,
+          "weather_condition": "Partly Cloudy",
+          "baseline_forecast_units": 22
+        }
+      ],
+      "output": [
+        {
+          "branch_id": "BR001",
+          "branch_name": "Sydney WesOnline",
+          "city": "Sydney",
+          "risk_level": "High",
+          "reorder_needed": true,
+          "recommended_order_qty": 30,
+          "confidence": "High",
+          "explanation": "Sydney forecast temperature of 31°C drives strong fan demand of 39 units but only 12 on hand; urgent replenishment needed."
+        },
+        {
+          "branch_id": "BR002",
+          "branch_name": "Melbourne WesOnline",
+          "city": "Melbourne",
+          "risk_level": "Low",
+          "reorder_needed": false,
+          "recommended_order_qty": 0,
+          "confidence": "Medium",
+          "explanation": "Current stock of 36 (28 + 8 in transit) is sufficient for forecast demand of 22 units under mild weather conditions."
+        }
+      ]
+    }
+  }
+}

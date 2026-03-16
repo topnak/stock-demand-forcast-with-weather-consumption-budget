@@ -1,0 +1,22 @@
+[
+  {
+    "branch_id": "BR001",
+    "branch_name": "Sydney Harbour Scoops",
+    "city": "Sydney",
+    "risk_level": "High",
+    "reorder_needed": true,
+    "recommended_order_qty": 60,
+    "confidence": "High",
+    "explanation": "Sydney forecast temperature of 31°C and strong recent sales indicate demand will exceed available stock."
+  },
+  {
+    "branch_id": "BR002",
+    "branch_name": "Melbourne Laneway Scoops",
+    "city": "Melbourne",
+    "risk_level": "Low",
+    "reorder_needed": false,
+    "recommended_order_qty": 0,
+    "confidence": "Medium",
+    "explanation": "Current stock is sufficient for forecast demand under mild weather conditions."
+  }
+]
