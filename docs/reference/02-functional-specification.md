@@ -287,7 +287,8 @@ Sorted by risk level (High → Medium → Low). Each card shows:
 
 ### 6.8 Microsoft Agent Chat
 
-- **Access:** Floating action button (bottom-right corner)
+- **Access:** Floating action button (bottom-right corner, Azure blue `#0078D4`) and "Ask Microsoft Agent" hero button
+- **Theme:** Azure/Microsoft blue (`#0078D4`) for FAB, panel header, and send button — distinct from the Wesfarmers green brand palette
 - **Technology:** Azure OpenAI via Function App proxy
 - **Context injection:** System prompt built from current dashboard data (replenishment, forecast, inventory, last run metadata)
 - **Capabilities:** Answer questions about branch risk, stock levels, weather impact, reorder reasoning, and run history
