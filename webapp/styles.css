@@ -273,13 +273,14 @@ body {
   background: rgba(255,255,255, 0.25);
 }
 .btn-hero--ghost {
-  background: transparent;
-  color: rgba(255,255,255, 0.8);
-  border: 1px solid rgba(255,255,255, 0.15);
+  background: #0078D4;
+  color: #ffffff;
+  border: 1px solid rgba(0, 120, 212, 0.6);
 }
 .btn-hero--ghost:hover {
-  background: rgba(255,255,255, 0.08);
+  background: #106EBE;
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.35);
 }
 
 /* ============================================
@@ -1496,21 +1497,22 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--color-brand);
+  background: #0078D4;
   color: #ffffff;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg), var(--glow-brand);
+  box-shadow: 0 4px 16px rgba(0, 120, 212, 0.35);
   transition: all var(--duration-fast) var(--ease-out);
   z-index: var(--z-modal);
 }
 .chat-fab:hover {
-  background: var(--color-brand-dark);
+  background: #106EBE;
   transform: scale(1.08);
 }
+.chat-fab.chat-fab--hidden { display: none; }
 .chat-fab__glow { display: none; }
 
 .chat-panel {
@@ -1538,7 +1540,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
-  background: var(--color-brand-darker);
+  background: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
   color: #ffffff;
 }
 .chat-panel-title {
@@ -1646,7 +1648,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: var(--color-brand);
+  background: #0078D4;
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -1655,7 +1657,7 @@ body {
   justify-content: center;
   transition: all var(--duration-fast);
 }
-.chat-send:hover { background: var(--color-brand-dark); }
+.chat-send:hover { background: #106EBE; }
 
 /* ============================================
    LOADING SPINNER

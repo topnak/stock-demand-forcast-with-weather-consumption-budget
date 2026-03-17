@@ -1090,8 +1090,8 @@
 
   function toggleChat() {
     chatOpen = !chatOpen;
-    document.getElementById('chatPanel').classList.toggle('open', chatOpen);
-    document.getElementById('chatFab').classList.toggle('hidden', chatOpen);
+    document.getElementById('chatPanel').classList.toggle('chat-panel--open', chatOpen);
+    document.getElementById('chatFab').classList.toggle('chat-fab--hidden', chatOpen);
     if (chatOpen) document.getElementById('chatInput').focus();
   }
 
