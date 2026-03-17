@@ -67,25 +67,26 @@ Example rule:
 - 27–30°C → moderate demand increase
 
 ### 3. Operational Dashboard
-A web dashboard displays:
+A web dashboard (Wesfarmers corporate green design system) displays:
 
-- store locations on a map
-- historical sales trends
-- stock levels
-- predicted demand
-- agent recommendations
-- workflow run history
+- AI-generated headline insights with risk distribution
+- compact KPI tiles (branches, high risk, reorder units, predicted demand, avg temp)
+- store locations on an interactive Azure Maps map
+- per-branch recommendation cards with inline AI explanations
+- animated workflow pipeline visualisation
+- historical sales trends and inventory charts
+- agent workflow run history
 
-The dashboard is mobile-friendly and designed in a **premium Microsoft-style UI**.
+The dashboard is mobile-friendly and designed for executive/boardroom presentation.
 
-### 4. Conversational Operations Assistant
+### 4. Microsoft Agent Chat Assistant
 Operators can ask questions such as:
 
 - Which stores need stock tomorrow?
 - Why is Sydney high risk?
 - What happened during the last 03:00 AM run?
 
-A conversational AI agent answers using the latest workflow output.
+A conversational **Microsoft Agent** answers using the latest workflow output.
 
 ---
 
@@ -364,24 +365,39 @@ Without this, Copilot often generates **generic cloud architecture** instead of 
 Your repo should look like this:
 
 
-southern-scoops-demo
+nightly-stock-planner
 │
 ├─ .github
-│ └─ copilot-instructions.md
+│  └─ copilot-instructions.md
 │
 ├─ docs
-│ ├─ solution-brief.md
-│ ├─ architecture.md
-│ ├─ sample-branchInputs.json
-│ └─ sample-agent-output.json
+│  ├─ solution-brief.md
+│  ├─ azure-setup-checklist.md
+│  ├─ deployment-checklist.md
+│  ├─ deployment-runbook-wesonlinephnak.md
+│  ├─ ui-premium-guidelines.md
+│  ├─ reference/
+│  │  ├─ 01-architecture.md
+│  │  ├─ 02-functional-specification.md
+│  │  └─ 03-agentic-solution.md
+│  ├─ sample-branchInputs.json
+│  └─ sample-agent-output.json
 │
-├─ logicapps
-│ └─ nightly-stock-planner.json
+├─ api/
+│
+├─ input/
+│
+├─ logicapps/
 │
 ├─ webapp
-│ ├─ index.html
-│ ├─ app.js
-│ └─ styles.css
+│  ├─ index.html
+│  ├─ app.js
+│  ├─ config.js
+│  ├─ styles.css
+│  ├─ styles/
+│  │  ├─ design-tokens.css
+│  │  └─ premium-components.css
+│  └─ output/
 │
 └─ README.md
 

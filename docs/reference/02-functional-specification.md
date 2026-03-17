@@ -209,9 +209,19 @@ Array of up to 20 run entries:
 
 ## 6. Dashboard Functional Specification
 
-### 6.1 KPI Tiles
+The dashboard uses a **Wesfarmers corporate green** (`#00843D`) design system with Inter font, CSS custom properties (`design-tokens.css`), and an 8px spacing grid. It is responsive across mobile, tablet, and desktop.
 
-Five tiles displayed at the top of the dashboard:
+### 6.0 Headline KPI Card
+
+A prominent card at the top showing:
+- AI-generated insight summary (deterministic text synthesis from forecast + replenishment data)
+- Risk distribution bar (visual segments for High/Medium/Low branches)
+- Weather chips showing temperature per city
+- Scrolling news ticker with key operational highlights
+
+### 6.1 Compact KPI Tiles
+
+Five uniform compact tiles displayed in a balanced 5-column grid (3-col on tablet, 2-col on mobile):
 
 | Tile | Data Source | Calculation | Tooltip |
 |---|---|---|---|
@@ -241,8 +251,9 @@ Sorted by risk level (High → Medium → Low). Each card shows:
   - **On Hand** — current stock
   - **Last Day Sold** — most recent day's sales from `sales_recent.json`
   - **Predicted** — baseline forecast (from `forecast_output.json`)
-  - **Reorder Qty** — recommended order (highlighted in blue)
-- Agent explanation text
+  - **Reorder Qty** — recommended order (highlighted with reorder bar)
+- Inline AI explanation text directly in the reorder bar with sparkles icon
+- Carousel navigation with prev/next buttons on mobile
 
 ### 6.4 Sales Trend Chart
 
@@ -259,13 +270,22 @@ Sorted by risk level (High → Medium → Low). Each card shows:
 - **Line overlay:** Predicted Demand (red)
 - **Purpose:** Visual comparison of available stock vs anticipated demand
 
-### 6.6 Workflow Activity Timeline
+### 6.6 Animated Workflow Pipeline
+
+- **Data:** `workflow_steps.json` (7 phases from latest run)
+- **Phases:** Load Branches → Load Sales → Load Inventory → Weather Forecasts → Demand Calculation → Agent Decision → Write Outputs
+- **Animation:** Sequential step-by-step: pending (grey) → running (blue pulse) → success (green) / failed (red)
+- **Connectors:** Animated fill lines between steps
+- **Replay:** Button to replay the animation
+- **Icons:** Lucide icons mapped per action (database, shopping-cart, package, cloud-sun, calculator, brain, hard-drive)
+
+### 6.7 Workflow Activity Timeline
 
 - **Data:** `workflow_runs.json` (last 20 runs)
 - **Each entry shows:** Run ID, status badge, branches evaluated, flagged count, timestamp
 - **Portal link:** Click to view the full run in Azure Portal
 
-### 6.7 Operations Chat Assistant
+### 6.8 Microsoft Agent Chat
 
 - **Access:** Floating action button (bottom-right corner)
 - **Technology:** Azure OpenAI via Function App proxy

@@ -1,8 +1,8 @@
 # Premium UI Design Guidelines
 
-These guidelines define the visual and interaction standards for building a **modern, premium dashboard interface**.
+These guidelines define the visual and interaction standards for the **WesOnline AI Stock Planner** dashboard.
 
-The goal is to create an interface that feels **clean, spacious, refined, and high-end**, similar to products like Apple, Stripe, Linear, and Notion.
+The design system uses a **Wesfarmers corporate green** (`#00843D`) palette with Inter font, 8px spacing grid, and CSS custom properties defined in `webapp/styles/design-tokens.css`.
 
 All UI components should follow these rules.
 
@@ -12,20 +12,17 @@ All UI components should follow these rules.
 
 The interface should feel:
 
-• Minimal
-• Spacious
-• Calm
-• Elegant
-• Modern
-• Polished
+- Minimal and spacious
+- Corporate and boardroom-ready
+- Clean with strong information hierarchy
+- Responsive across mobile, tablet, and desktop
 
 Avoid:
 
-• Crowded layouts
-• Heavy borders
-• Flat or dated styling
-• Excessive colors
-• Dense UI components
+- Bright gradients, neon colors, or glossy effects
+- Crowded layouts or dense UI components
+- Heavy borders or excessive decoration
+- Emoji-like or mismatched icons
 
 Whitespace and hierarchy should guide the user naturally.
 
@@ -81,52 +78,50 @@ Example:
 
 # 4. Color System
 
-Use a calm neutral palette with a single primary accent.
+Use the **Wesfarmers corporate green** palette as defined in `webapp/styles/design-tokens.css`.
 
-## Core colors
+## Brand colors
 
-Background
-#F6F7FB
+| Token | Value | Usage |
+|---|---|---|
+| `--color-brand` | `#00843D` | Primary brand color, links, active states |
+| `--color-brand-dark` | `#006B31` | Hover states, header gradient |
+| `--color-brand-darker` | `#004225` | Deep accents |
+| `--color-brand-light` | `#e6f4ec` | Light backgrounds, badges |
+| `--color-brand-lighter` | `#f0f9f4` | Subtle tints |
 
-Card background
-#FFFFFF
+## Surfaces
 
-Primary
-#2563EB
+| Token | Value |
+|---|---|
+| `--color-bg-page` | `#f5f6f8` |
+| `--color-bg-card` | `#ffffff` |
+| `--color-bg-muted` | `#f0f1f3` |
+| `--color-bg-soft` | `#f7f8fa` |
 
-Text primary
-#111827
+## Text
 
-Text secondary
-#6B7280
-
-Divider / border
-rgba(0,0,0,0.05)
+| Token | Value |
+|---|---|
+| `--color-text-primary` | `#1a1c23` |
+| `--color-text-secondary` | `#4b5563` |
+| `--color-text-tertiary` | `#6b7280` |
+| `--color-text-muted` | `#9ca3af` |
 
 ---
 
 ## Status colors
 
-Success
-#22C55E
+Use semantic colors only for status indicators:
 
-Warning
-#F59E0B
+| Status | Color | Token |
+|---|---|---|
+| Success / Low risk | `#16a34a` | `--color-success` |
+| Warning / Medium risk | `#d97706` | `--color-warning` |
+| Danger / High risk | `#dc2626` | `--color-danger` |
+| Info | `#2563eb` | `--color-info` |
 
-Danger
-#EF4444
-
-Use very soft backgrounds for status indicators.
-
-Example:
-
-```
-.success-badge {
-  background: rgba(34,197,94,0.1);
-}
-```
-
-Avoid strong saturated colors.
+Never use color alone — always pair with text labels and icons.
 
 ---
 
@@ -134,39 +129,22 @@ Avoid strong saturated colors.
 
 Use the **Inter** font family.
 
-```
-font-family: "Inter", system-ui, sans-serif;
+```css
+font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 ```
 
-Typography hierarchy must be clear.
+The full type scale is defined in `webapp/styles/design-tokens.css`.
 
 ## Font scale
 
-Page title
-32px
-Weight 600
-
-Section title
-20px
-Weight 600
-
-Metric numbers
-36px – 40px
-Weight 700
-
-Body text
-14px
-Weight 400
-
-Caption text
-12px
-Weight 400
-
-Secondary text should use a muted color:
-
-```
-color: #6B7280;
-```
+| Role | Size | Weight | Token |
+|---|---|---|---|
+| Page title | 28px | 700 | `--text-2xl`, `--font-bold` |
+| Section title | 22px | 600 | `--text-xl`, `--font-semibold` |
+| KPI numbers | 36px–48px | 800 | `--text-3xl`, `--font-extrabold` |
+| Body text | 15px | 400 | `--text-md`, `--font-regular` |
+| Small text | 13px | 400 | `--text-sm` |
+| Caption / metadata | 11px | 500 | `--text-xs`, `--font-medium` |
 
 ---
 

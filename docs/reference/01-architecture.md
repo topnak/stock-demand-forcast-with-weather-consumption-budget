@@ -208,7 +208,7 @@ This ensures **zero API keys exist in the frontend source code**.
 | **Charts** | Chart.js | v4.4.7 (CDN) |
 | **Maps** | Azure Maps Web SDK | v3 (CDN) |
 | **Font** | Inter | Google Fonts |
-| **Design System** | Custom CSS tokens + components | `design-tokens.css` + `premium-components.css` |
+| **Design System** | Custom CSS tokens + components | Wesfarmers green `#00843D`, `design-tokens.css` + `premium-components.css` |
 | **API Proxy** | Azure Functions | Node.js 20, Consumption plan |
 | **Hosting** | Azure Static Web Apps | Free tier |
 
@@ -247,11 +247,13 @@ nightly-stock-planner/
 │
 ├── webapp/                       # Static Web App (deployed)
 │   ├── index.html                # Dashboard HTML
-│   ├── app.js                    # Dashboard logic (~850 lines)
+│   ├── app.js                    # Dashboard logic (~1600 lines)
 │   ├── config.js                 # API endpoint URLs
 │   ├── env.js                    # Runtime env (empty — no secrets)
-│   ├── styles.css                # Dashboard-specific CSS
-│   ├── styles/                   # Copy of /styles/ for deployment
+│   ├── styles.css                # Dashboard CSS (Wesfarmers green, pipeline animation)
+│   ├── styles/                   # Design system for deployment
+│   │   ├── design-tokens.css     # CSS custom properties (palette, spacing, typography)
+│   │   └── premium-components.css # Reusable component classes
 │   └── output/                   # Local copies of workflow outputs
 │
 └── docs/                         # Documentation

@@ -16,7 +16,7 @@ Create all resources in the **same region** (recommended: `australiaeast`).
 | 2 | **Storage Account** (Blob) | Stores input data and workflow output JSON files |
 | 3 | **Logic App (Consumption)** | Nightly `nightly-stock-planner` autonomous agent workflow |
 | 4 | **Azure Maps Account** (G2 / Gen2) | Provides weather forecast API for demand uplift |
-| 5 | **Azure OpenAI Service** | Hosts the `gpt-4o` model used by the planning agent and chat assistant |
+| 5 | **Azure OpenAI Service** | Hosts the `gpt-4o` model used by the planning agent and Microsoft Agent chat |
 | 6 | **Static Web App** | Hosts the operations dashboard and conversational chat UI |
 | 7 | **Function App** (Node.js 20) | API proxy — `/api/config` and `/api/chat` |
 
@@ -152,6 +152,6 @@ These files are consumed by the Static Web App dashboard.
 - [ ] Function App deployed with app settings configured and CORS set
 - [ ] Static Web App deployed; `webapp/config.js` points to correct Function App URL
 - [ ] Dashboard loads and displays map, charts, and recommendations
-- [ ] Chat assistant responds to operator questions
+- [ ] Microsoft Agent chat responds to operator questions
 
 > **Known issues and fixes:** See [deployment-runbook-wesonlinephnak.md](deployment-runbook-wesonlinephnak.md#known-issues-and-fixes) for 6 documented issues encountered during provisioning.

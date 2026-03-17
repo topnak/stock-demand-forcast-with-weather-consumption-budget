@@ -17,7 +17,7 @@ Every night at **03:00 AM AEST**, an Azure Logic App workflow automatically:
 4. **Sends** all branch data to an Azure OpenAI agent in a single call
 5. **Writes** risk assessments and reorder recommendations back to Blob Storage
 
-A premium **dashboard** lets operations teams visualise results, and a built-in **chat assistant** explains the agent's reasoning.
+A premium **dashboard** (Wesfarmers corporate green design system) lets operations teams visualise results with an animated workflow pipeline, AI-powered headline insights, and a built-in **Microsoft Agent** chat assistant that explains the agent's reasoning.
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌────────────────┐     ┌──────────────┐
@@ -111,9 +111,13 @@ ELSE                   →  predicted = avg_7day × 1.00
 │
 ├── webapp/                        Static Web App (deployed)
 │   ├── index.html                 Dashboard UI
-│   ├── app.js                     Dashboard logic
+│   ├── app.js                     Dashboard logic (~1600 lines)
 │   ├── config.js                  API endpoint config
-│   └── styles.css                 Dashboard styles
+│   ├── styles.css                 Dashboard styles (Wesfarmers green, pipeline animation)
+│   ├── styles/
+│   │   ├── design-tokens.css      CSS custom properties (colors, spacing, typography)
+│   │   └── premium-components.css Reusable component library
+│   └── output/                    Local output JSON files for development
 │
 └── docs/
     ├── reference/
@@ -255,13 +259,15 @@ az rest --method POST `
 
 | Feature | Description |
 |---|---|
-| **KPI Tiles** | Branches, High Risk, Reorder Units, Total Predicted, Avg Temp |
+| **Headline KPI Card** | AI-generated insight summary, risk distribution bar, weather chips, scrolling news ticker |
+| **Compact KPI Tiles** | 5 uniform cards in a balanced grid — Branches, High Risk, Reorder Units, Predicted Demand, Avg Temp |
 | **Interactive Map** | Azure Maps with risk-coloured pins and hover popups |
-| **Recommendations** | Per-branch cards with stock metrics and agent explanations |
+| **Recommendations Carousel** | Per-branch cards with stock metrics, inline AI explanation for each reorder recommendation |
 | **Sales Trend** | 14-day line chart per branch |
 | **Inventory Overview** | Stacked bar (stock + transit + safety) vs predicted demand line |
+| **Animated Pipeline** | Step-by-step workflow visualisation with sequential animation (Load → Weather → Forecast → Agent → Output) and replay button |
 | **Workflow Timeline** | Last 20 run history with Azure Portal links |
-| **Chat Assistant** | AI-powered Q&A about branch risk, stock, and weather |
+| **Microsoft Agent Chat** | AI-powered Q&A about branch risk, stock, and weather |
 
 ---
 
@@ -322,6 +328,7 @@ See [docs/reference/03-agentic-solution.md](docs/reference/03-agentic-solution.m
 | Charts | Chart.js v4.4.7 |
 | Maps | Azure Maps Web SDK v3 |
 | Font | Inter (Google Fonts) |
+| Design System | Wesfarmers Corporate Green (`#00843D`), CSS custom properties, 8px spacing grid |
 | API Proxy | Azure Functions (Node.js 20) |
 | Hosting | Azure Static Web Apps (Free tier) |
 

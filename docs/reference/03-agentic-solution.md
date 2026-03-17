@@ -41,7 +41,7 @@ The solution uses two distinct agents:
 - **Purpose:** Evaluate stock risk for all 6 branches, recommend reorder quantities
 - **Output:** JSON files written to Blob Storage
 
-#### Agent 2: Operations Chat Assistant (Conversational)
+#### Agent 2: Microsoft Agent Chat (Conversational)
 
 - **Type:** Conversational (responds to human queries)
 - **Interface:** Chat panel in the dashboard UI
