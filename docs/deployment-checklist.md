@@ -1,6 +1,8 @@
-# Deployment Checklist — Southern Scoops Agentic Replenishment Demo
+# Deployment Checklist — WesOnline Agentic Replenishment Demo
 
 This checklist walks through provisioning Azure resources, configuring environment variables, uploading seed data, and running the nightly stock planner workflow.
+
+> **Full step-by-step CLI commands:** See [deployment-runbook-wesonlinephnak.md](deployment-runbook-wesonlinephnak.md) for the complete runbook with exact commands and known issue fixes.
 
 ---
 
@@ -12,17 +14,19 @@ Create all resources in the **same region** (recommended: `australiaeast`).
 |---|----------|---------|
 | 1 | **Resource Group** | Container for all demo resources |
 | 2 | **Storage Account** (Blob) | Stores input data and workflow output JSON files |
-| 3 | **Logic App Standard** | Hosts the `nightly-stock-planner` autonomous agent workflow |
-| 4 | **Azure Maps Account** (S0 or S1) | Provides weather forecast API for demand uplift |
+| 3 | **Logic App (Consumption)** | Nightly `nightly-stock-planner` autonomous agent workflow |
+| 4 | **Azure Maps Account** (G2 / Gen2) | Provides weather forecast API for demand uplift |
 | 5 | **Azure OpenAI Service** | Hosts the `gpt-4o` model used by the planning agent and chat assistant |
 | 6 | **Static Web App** | Hosts the operations dashboard and conversational chat UI |
+| 7 | **Function App** (Node.js 20) | API proxy — `/api/config` and `/api/chat` |
 
 ### Provisioning notes
 
-- **Storage Account** — Create two blob containers: `input` and `output`.
-- **Azure OpenAI** — Deploy a `gpt-4o` model and note the deployment name, endpoint, and API key.
-- **Azure Maps** — Copy the primary subscription key from the Authentication blade.
-- **Logic App Standard** — Use the **Workflow Service Plan** (WS1). Create a blob API connection and an Azure OpenAI managed connection.
+- **Storage Account** — Create two blob containers: `input` and `output` with public blob read + CORS enabled.
+- **Azure OpenAI** — Deploy a `gpt-4o` model with `GlobalStandard` SKU (not `Standard`). Note the endpoint and API key.
+- **Azure Maps** — Use `--sku G2 --kind Gen2 --accept-tos`. Use `--account-name` (not `--name`).
+- **Logic App (Consumption)** — Deploy via ARM template (`logicapps/consumption/arm-template.json`). Uses `parameters()` instead of `appsetting()`. Enable System-Assigned Managed Identity and assign **Storage Blob Data Contributor** role.
+- **Function App** — Linux, Node 20, Consumption plan. Deploy code from `api/` folder.
 
 ---
 
@@ -108,17 +112,15 @@ The workflow runs automatically at **03:00 AM Australia/Sydney time** every day.
 
 ### Option B — Trigger manually from Azure Portal
 
-1. Navigate to your **Logic App** → Workflows → `nightly-stock-planner`.
+1. Navigate to your **Logic App** (`la-wesonlinephnak`) in Azure Portal.
 2. Click **Run Trigger** → **Recurrence_03AM_Sydney** → **Run**.
 3. Monitor the run under **Run History**.
 
-### Option C — Trigger via REST API
+### Option C — Trigger via REST API (Consumption)
 
-```bash
-# Get the callback URL from the portal (Logic App → Workflows → nightly-stock-planner → Overview → Callback URL)
-CALLBACK_URL="<your-callback-url>"
-
-curl -X POST "$CALLBACK_URL"
+```powershell
+az rest --method POST `
+  --uri "https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/wesonlinephnak/providers/Microsoft.Logic/workflows/la-wesonlinephnak/triggers/Recurrence_03AM_Sydney/run?api-version=2016-06-01"
 ```
 
 ### Verify output
@@ -138,13 +140,18 @@ These files are consumed by the Static Web App dashboard.
 ## Quick Validation Checklist
 
 - [ ] Resource Group created in `australiaeast`
-- [ ] Storage Account provisioned with `input` and `output` containers
+- [ ] Storage Account provisioned with `input` and `output` containers (public blob read + CORS)
 - [ ] Four input files uploaded to the `input` container
-- [ ] Azure Maps account created; key copied
-- [ ] Azure OpenAI resource created; `gpt-4o` model deployed
-- [ ] Logic App Standard deployed with all application settings configured
-- [ ] Blob API connection and OpenAI connection created in the Logic App
-- [ ] Manual workflow run succeeds and output files appear in the `output` container
-- [ ] Static Web App deployed with environment variables configured
+- [ ] Empty `workflow_runs.json` (`[]`) seeded in the `output` container
+- [ ] Azure Maps account created (G2/Gen2); key copied
+- [ ] Azure OpenAI resource created; `gpt-4o` model deployed (GlobalStandard SKU)
+- [ ] Logic App (Consumption) deployed via ARM template with parameters configured
+- [ ] System-Assigned MSI enabled; `Storage Blob Data Contributor` role assigned
+- [ ] Waited 2+ minutes for RBAC propagation
+- [ ] Manual workflow run succeeds and 4 output files appear in the `output` container
+- [ ] Function App deployed with app settings configured and CORS set
+- [ ] Static Web App deployed; `webapp/config.js` points to correct Function App URL
 - [ ] Dashboard loads and displays map, charts, and recommendations
 - [ ] Chat assistant responds to operator questions
+
+> **Known issues and fixes:** See [deployment-runbook-wesonlinephnak.md](deployment-runbook-wesonlinephnak.md#known-issues-and-fixes) for 6 documented issues encountered during provisioning.

@@ -319,8 +319,8 @@ Returns runtime configuration to the dashboard.
 ```json
 {
   "AZURE_MAPS_KEY": "...",
-  "INPUT_BASE": "https://southernscoopsdemo.blob.core.windows.net/input",
-  "OUTPUT_BASE": "https://southernscoopsdemo.blob.core.windows.net/output"
+  "INPUT_BASE": "https://stwesonlinephnak.blob.core.windows.net/input",
+  "OUTPUT_BASE": "https://stwesonlinephnak.blob.core.windows.net/output"
 }
 ```
 

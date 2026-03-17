@@ -38,8 +38,8 @@ A premium **dashboard** lets operations teams visualise results, and a built-in 
 
 | Component | Azure Service | Purpose |
 |---|---|---|
-| **Orchestration** | Logic Apps Standard | Nightly autonomous workflow |
-| **AI Reasoning** | Azure OpenAI (GPT-4.1) | Risk assessment & reorder recommendations |
+| **Orchestration** | Logic Apps (Consumption) | Nightly autonomous workflow (ARM-deployed) |
+| **AI Reasoning** | Azure OpenAI (GPT-4o) | Risk assessment & reorder recommendations |
 | **Weather Data** | Azure Maps Weather API | Tomorrow's forecast per city |
 | **Data Storage** | Azure Blob Storage | Input seed data + output results (JSON) |
 | **Dashboard** | Azure Static Web Apps | Premium UI with KPIs, map, charts, chat |
@@ -50,6 +50,7 @@ A premium **dashboard** lets operations teams visualise results, and a built-in 
 - **Agent runs ONCE after the loop** — not inside the For Each. One API call for all 6 branches.
 - **Demand forecast is deterministic** — computed by the Logic App (temperature uplift formula), not invented by the LLM.
 - **Zero secrets in the frontend** — all API keys stay in the Function App; dashboard gets config via `/api/config`.
+- **Consumption Logic App** — deployed via ARM template (`logicapps/consumption/arm-template.json`), uses `parameters()` instead of `appsetting()`.
 
 ---
 
@@ -98,9 +99,11 @@ ELSE                   →  predicted = avg_7day × 1.00
 │   └── sku.json                  Product: Pedestal Fan
 │
 ├── logicapps/
-│   └── nightly-stock-planner/
-│       ├── workflow.json          Logic App workflow definition
-│       └── agent.json             Agent configuration reference
+│   ├── nightly-stock-planner/
+│   │   ├── workflow.json          Logic App Standard definition (reference)
+│   │   └── agent.json             Agent configuration reference
+│   └── consumption/
+│       └── arm-template.json      Consumption Logic App ARM template
 │
 ├── styles/                        Premium design system
 │   ├── design-tokens.css          CSS custom properties
@@ -119,7 +122,8 @@ ELSE                   →  predicted = avg_7day × 1.00
     │   └── 03-agentic-solution.md Agent loop & design rationale
     ├── solution-brief.md
     ├── azure-setup-checklist.md
-    └── deployment-checklist.md
+    ├── deployment-checklist.md
+    └── deployment-runbook-wesonlinephnak.md
 ```
 
 ---
@@ -133,11 +137,11 @@ ELSE                   →  predicted = avg_7day × 1.00
 
 | Resource | Notes |
 |---|---|
-| Resource Group | e.g. `rg-southern-scoops-demo` |
-| Azure Logic Apps Standard | Stateful workflow with MSI enabled |
-| Azure Blob Storage | Containers: `input`, `output` (public blob read) |
-| Azure OpenAI | GPT-4 or GPT-4o deployment |
-| Azure Maps | S0 tier for weather API |
+| Resource Group | e.g. `wesonlinephnak` |
+| Azure Logic Apps (Consumption) | ARM-deployed with System-Assigned MSI |
+| Azure Blob Storage | Containers: `input`, `output` (public blob read + CORS) |
+| Azure OpenAI | GPT-4o deployment (GlobalStandard SKU) |
+| Azure Maps | G2 tier (Gen2) for weather API |
 | Azure Static Web Apps | Free tier |
 | Azure Functions | Node.js 20, Consumption plan |
 
@@ -179,9 +183,31 @@ az storage blob upload-batch \
   --overwrite
 ```
 
-### 4. Deploy the Logic App Workflow
+### 4. Deploy the Logic App (Consumption)
 
-Upload `logicapps/nightly-stock-planner/workflow.json` to your Logic App Standard resource via the Azure Portal or Kudu.
+Deploy via ARM template:
+
+```powershell
+az deployment group create `
+  --resource-group wesonlinephnak `
+  --template-file logicapps/consumption/arm-template.json `
+  --parameters logicapps/consumption/arm-parameters.wesonlinephnak.json
+```
+
+Then assign MSI blob access:
+
+```powershell
+$PRINCIPAL_ID = az resource show --resource-group wesonlinephnak `
+  --resource-type Microsoft.Logic/workflows --name la-wesonlinephnak `
+  --query "identity.principalId" -o tsv
+
+az role assignment create --assignee-object-id $PRINCIPAL_ID `
+  --assignee-principal-type ServicePrincipal `
+  --role "Storage Blob Data Contributor" `
+  --scope "/subscriptions/{sub}/resourceGroups/wesonlinephnak/providers/Microsoft.Storage/storageAccounts/stwesonlinephnak"
+```
+
+> **Important:** Wait 2+ minutes for RBAC propagation before triggering the first run.
 
 ### 5. Configure the Function App
 
@@ -200,6 +226,7 @@ Set the following App Settings on the Function App:
 | `AZURE_MAPS_KEY` | Your Azure Maps key |
 | `INPUT_BASE` | `https://<storage>.blob.core.windows.net/input` |
 | `OUTPUT_BASE` | `https://<storage>.blob.core.windows.net/output` |
+| `AZURE_STORAGE_ACCOUNT_NAME` | Storage account name |
 
 ### 6. Deploy the Dashboard
 
@@ -213,7 +240,14 @@ az staticwebapp deploy \
 
 ### 7. Trigger a Run
 
-Either wait until 03:00 AM AEST, or trigger the Logic App manually from the Azure Portal.
+Either wait until 03:00 AM AEST, or trigger via CLI:
+
+```powershell
+az rest --method POST `
+  --uri "https://management.azure.com/subscriptions/{sub}/resourceGroups/wesonlinephnak/providers/Microsoft.Logic/workflows/la-wesonlinephnak/triggers/Recurrence_03AM_Sydney/run?api-version=2016-06-01"
+```
+
+> **Full deployment guide with known issues:** See [docs/deployment-runbook-wesonlinephnak.md](docs/deployment-runbook-wesonlinephnak.md)
 
 ---
 
@@ -261,6 +295,7 @@ See [docs/reference/03-agentic-solution.md](docs/reference/03-agentic-solution.m
 | [Solution Brief](docs/solution-brief.md) | Business scenario overview |
 | [Azure Setup](docs/azure-setup-checklist.md) | Resource provisioning guide |
 | [Deployment](docs/deployment-checklist.md) | Step-by-step deployment walkthrough |
+| [Deployment Runbook](docs/deployment-runbook-wesonlinephnak.md) | Full CLI commands, known issues & fixes |
 
 ---
 
@@ -278,8 +313,8 @@ See [docs/reference/03-agentic-solution.md](docs/reference/03-agentic-solution.m
 
 | Layer | Technology |
 |---|---|
-| Orchestration | Azure Logic Apps Standard |
-| AI Model | Azure OpenAI GPT-4.1 |
+| Orchestration | Azure Logic Apps (Consumption) |
+| AI Model | Azure OpenAI GPT-4o |
 | Weather | Azure Maps Weather API v1.1 |
 | Storage | Azure Blob Storage |
 | Frontend | Vanilla HTML/CSS/JS (no build step) |

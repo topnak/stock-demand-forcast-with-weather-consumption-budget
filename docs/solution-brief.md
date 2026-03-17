@@ -1,10 +1,10 @@
-# Southern Scoops Agentic Replenishment Demo
+# WesOnline Agentic Replenishment Demo
 
 ## Overview
 
 This solution demonstrates how **Microsoft Azure Agentic AI workflows** can support retail operations using autonomous decision-making.
 
-The demo simulates an Australian ice cream retailer named **Southern Scoops Ice Cream Co.**
+The demo simulates an Australian electronics retailer named **WesOnline**.
 
 Every night at **03:00 AM Australia/Sydney time**, an autonomous agent evaluates store conditions and determines whether each branch needs to reorder stock for the next day.
 
@@ -22,9 +22,9 @@ The goal is to demonstrate **AI-driven operational decision support** using Azur
 
 # Business Scenario
 
-Southern Scoops operates multiple ice cream stores across major Australian cities.
+WesOnline operates multiple electronics stores across major Australian cities.
 
-Ice cream demand is highly influenced by **weather conditions**, especially temperature.
+Electric fan demand is highly influenced by **weather conditions**, especially temperature.
 
 Store managers traditionally review:
 
@@ -76,7 +76,7 @@ A web dashboard displays:
 - agent recommendations
 - workflow run history
 
-The dashboard is mobile-friendly and designed in a **Microsoft-style UI**.
+The dashboard is mobile-friendly and designed in a **premium Microsoft-style UI**.
 
 ### 4. Conversational Operations Assistant
 Operators can ask questions such as:
@@ -95,11 +95,12 @@ The solution uses Azure services to implement an agent-driven workflow.
 
 ### Core services
 
-- Azure Logic Apps Standard
-- Azure OpenAI
+- Azure Logic Apps (Consumption)
+- Azure OpenAI (GPT-4o)
 - Azure Maps Weather API
 - Azure Blob Storage
 - Azure Static Web Apps
+- Azure Functions (API proxy)
 
 ---
 
@@ -161,9 +162,9 @@ store_type
 ## Product
 
 The demo focuses on one SKU:
-sku_id: IC001
-name: Classic Vanilla Ice Cream Tub 500ml
-price: AUD 7.50
+sku_id: EF001
+name: Pedestal Electric Fan 40cm
+price: AUD 89.00
 
 
 ---
@@ -241,9 +242,9 @@ The agent returns structured JSON such as:
   "branch_id": "BR001",
   "risk_level": "High",
   "reorder_needed": true,
-  "recommended_order_qty": 60,
+  "recommended_order_qty": 30,
   "confidence": "High",
-  "explanation": "Sydney forecast temperature of 31°C and strong recent sales indicate demand will exceed available stock."
+  "explanation": "Sydney forecast temperature of 31°C and strong recent sales indicate fan demand will exceed available stock."
 }
 Workflow Schedule
 

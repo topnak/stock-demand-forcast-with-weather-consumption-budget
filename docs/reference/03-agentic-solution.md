@@ -27,7 +27,7 @@ In contrast to a simple chatbot (which waits for a user to ask a question), an a
 
 ## 2. Our Agentic Architecture
 
-This solution implements the agentic pattern using **Azure Logic Apps Standard** as the orchestrator and **Azure OpenAI** as the reasoning engine.
+This solution implements the agentic pattern using **Azure Logic Apps (Consumption)** as the orchestrator and **Azure OpenAI** as the reasoning engine.
 
 ### Two-Agent Design
 
@@ -53,7 +53,7 @@ The solution uses two distinct agents:
 
 ## 3. Why Azure Logic Apps for Agentic Workflows?
 
-Azure Logic Apps Standard provides several advantages for building agentic solutions:
+Azure Logic Apps (Consumption) provides several advantages for building agentic solutions:
 
 | Capability | Benefit |
 |---|---|
@@ -449,7 +449,7 @@ The conversational agent uses a "context stuffing" approach (also known as "poor
 ```
 ┌──────────┐     ┌──────────────┐     ┌─────────────────┐
 │ Dashboard │────▶│ Azure        │────▶│ Azure OpenAI    │
-│ Chat UI   │    │ Function App │    │ GPT-4.1          │
+│ Chat UI   │    │ Function App │    │ GPT-4o          │
 │           │◀───│ /api/chat    │◀───│                  │
 └──────────┘     └──────────────┘     └─────────────────┘
 ```
@@ -472,7 +472,7 @@ This entire context is injected into the system message on every request. There 
 |---|---|
 | Data volume | Small (6 branches, ~20 data points each) |
 | Total tokens | ~1,500-2,000 tokens of context |
-| Model context window | 128K+ tokens (GPT-4.1) |
+| Model context window | 128K+ tokens (GPT-4o) |
 | Freshness | Always uses latest data from blob storage |
 | Complexity | Zero infrastructure beyond the Function App |
 

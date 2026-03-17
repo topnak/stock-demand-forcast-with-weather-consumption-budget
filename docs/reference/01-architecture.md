@@ -16,8 +16,8 @@
                                     │
                                     ▼
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                     AZURE LOGIC APPS STANDARD                                │
-│                     (la-southern-scoops)                                      │
+│                     AZURE LOGIC APPS (CONSUMPTION)                            │
+│                     (la-wesonlinephnak)                                       │
 │                                                                              │
 │  ┌─────────────┐   ┌────────────┐   ┌──────────────────┐                    │
 │  │ Read Input  │──▶│ For Each   │──▶│ Agent Call        │                    │
@@ -44,10 +44,10 @@
         ▼                       ▼                        ▼
 ┌──────────────┐   ┌──────────────────┐   ┌──────────────────────┐
 │ Azure Blob   │   │ Azure Maps       │   │ Azure OpenAI         │
-│ Storage      │   │ Weather API      │   │ (GPT-4.1)            │
+│ Storage      │   │ Weather API      │   │ (GPT-4o)             │
 │              │   │                  │   │                      │
 │ Containers:  │   │ Daily forecast   │   │ Deployment:          │
-│ • input/     │   │ per branch city  │   │   model-314fb        │
+│ • input/     │   │ per branch city  │   │   gpt-4o             │
 │ • output/    │   │ (6 API calls)    │   │                      │
 └──────┬───────┘   └──────────────────┘   │ Temperature: 0.2     │
        │                                  │ Max tokens: 4000     │
@@ -59,7 +59,7 @@
 │                                                                              │
 │  ┌───────────────────────────────┐   ┌──────────────────────────────────┐   │
 │  │  Azure Static Web App        │   │  Azure Function App              │   │
-│  │  (swa-wesonline-demo)        │   │  (func-wesonline-api)            │   │
+│  │  (swa-wesonlinephnak)        │   │  (func-wesonlinephnak)           │   │
 │  │                              │   │                                  │   │
 │  │  • index.html                │◀─▶│  GET /api/config                 │   │
 │  │  • app.js                    │   │    → AZURE_MAPS_KEY              │   │
@@ -79,13 +79,13 @@
 
 | Resource | Type | Name | Region | Purpose |
 |---|---|---|---|---|
-| Resource Group | — | `rg-southern-scoops-demo` | Australia East | All resources |
-| Logic App Standard | Microsoft.Web/sites | `la-southern-scoops` | Australia East | Nightly workflow + agent |
-| Storage Account | Microsoft.Storage | `southernscoopsdemo` | Australia East | Input/output JSON files |
-| Azure OpenAI | Microsoft.CognitiveServices | `openaidemophnak` | — | GPT-4.1 model (deployment: `model-314fb`) |
-| Azure Maps | Microsoft.Maps | — | — | Weather forecast API |
-| Static Web App | Microsoft.Web/staticSites | `swa-wesonline-demo` | East Asia | Dashboard frontend (Free tier) |
-| Function App | Microsoft.Web/sites | `func-wesonline-api` | Australia East | API proxy (Linux, Node 20, Consumption) |
+| Resource Group | — | `wesonlinephnak` | Australia East | All resources |
+| Logic App (Consumption) | Microsoft.Logic/workflows | `la-wesonlinephnak` | Australia East | Nightly workflow + agent |
+| Storage Account | Microsoft.Storage | `stwesonlinephnak` | Australia East | Input/output JSON files |
+| Azure OpenAI | Microsoft.CognitiveServices | `openai-wesonlinephnak` | Australia East | GPT-4o model (deployment: `gpt-4o`, GlobalStandard SKU) |
+| Azure Maps | Microsoft.Maps | `mapswesonlinephnak` | Global | Weather forecast API (G2/Gen2) |
+| Static Web App | Microsoft.Web/staticSites | `swa-wesonlinephnak` | Australia East | Dashboard frontend (Free tier) |
+| Function App | Microsoft.Web/sites | `func-wesonlinephnak` | Australia East | API proxy (Linux, Node 20, Consumption) |
 
 **Subscription:** `41da8f32-f7b0-496d-aa3b-d150afea583a`
 
@@ -199,8 +199,8 @@ This ensures **zero API keys exist in the frontend source code**.
 
 | Layer | Technology | Version/Detail |
 |---|---|---|
-| **Orchestration** | Azure Logic Apps Standard | Stateful workflow |
-| **AI Model** | Azure OpenAI | GPT-4.1 (`model-314fb`) |
+| **Orchestration** | Azure Logic Apps (Consumption) | ARM-deployed workflow (`Microsoft.Logic/workflows`) |
+| **AI Model** | Azure OpenAI | GPT-4o (`gpt-4o`, GlobalStandard SKU) |
 | **Weather** | Azure Maps Weather API | v1.1 daily forecast |
 | **Storage** | Azure Blob Storage | REST API v2020-10-02 |
 | **Frontend** | Vanilla HTML/CSS/JS | No build step |
@@ -235,9 +235,11 @@ nightly-stock-planner/
 │   └── sku.json                  # Product: Pedestal Fan 40cm (EF001)
 │
 ├── logicapps/
-│   └── nightly-stock-planner/
-│       ├── workflow.json         # Complete Logic App definition
-│       └── agent.json            # Agent configuration reference
+│   ├── nightly-stock-planner/
+│   │   ├── workflow.json         # Logic App Standard definition (reference)
+│   │   └── agent.json            # Agent configuration reference
+│   └── consumption/
+│       └── arm-template.json     # Consumption Logic App ARM template
 │
 ├── styles/                       # Premium design system
 │   ├── design-tokens.css         # CSS custom properties
