@@ -1,14 +1,14 @@
-# GitHub Copilot Instructions for Southern Scoops Agentic Replenishment Demo
+# GitHub Copilot Instructions for WesOnline Agentic Replenishment Demo
 
-You are helping build an Azure-based retail demo for **Southern Scoops Ice Cream Co.**
+You are helping build an Azure-based retail demo for **WesOnline**, an Australian electronics retailer.
 
 ## Solution goal
 
-Build an **agentic demand forecasting and stock replenishment demo** for an Australian ice cream retailer.
+Build an **agentic demand forecasting and stock replenishment demo** for an Australian electronics retailer.
 
 The solution must use:
 
-- **Azure Logic Apps Standard**
+- **Azure Logic Apps (Consumption)**
 - **Autonomous Agent workflow** for nightly planning
 - **Conversational Agent workflow** for operator Q&A
 - **Azure Blob Storage** for input and output JSON files
@@ -23,7 +23,7 @@ Prefer the **minimum viable architecture** that is demo-friendly, visually impre
 
 ## Business scenario
 
-The company is **Southern Scoops Ice Cream Co.**
+The company is **WesOnline**, an Australian electronics retailer.
 
 The demo predicts whether each branch will need more stock tomorrow based on:
 
@@ -36,8 +36,8 @@ The demo predicts whether each branch will need more stock tomorrow based on:
 
 The main product is:
 
-- `IC001`
-- `Classic Vanilla Ice Cream Tub 500ml`
+- `EF001`
+- `Pedestal Electric Fan 40cm`
 - currency: `AUD`
 
 Branch cities are in Australia and should use realistic Australian naming and geography.
@@ -49,7 +49,7 @@ Branch cities are in Australia and should use realistic Australian naming and ge
 Always follow these design rules:
 
 ### 1. Use two agents
-Build two workflows in Azure Logic Apps Standard:
+Build two workflows in Azure Logic Apps (Consumption):
 
 #### Workflow 1: `nightly-stock-planner`
 Type:
@@ -260,18 +260,18 @@ Use 6 branches in major Australian cities:
 - Gold Coast
 
 Example branch names:
-- Sydney Harbour Scoops
-- Melbourne Laneway Scoops
-- Brisbane River Scoops
-- Perth Sunset Scoops
-- Adelaide Market Scoops
-- Gold Coast Beach Scoops
+- Sydney WesOnline
+- Melbourne WesOnline
+- Brisbane WesOnline
+- Perth WesOnline
+- Adelaide WesOnline
+- Gold Coast WesOnline
 
 ### Product design
 Single SKU for the first demo:
-- `IC001`
-- `Classic Vanilla Ice Cream Tub 500ml`
-- `AUD 7.50`
+- `EF001`
+- `Pedestal Electric Fan 40cm`
+- `AUD 89.00`
 
 ### Weather realism
 Use Celsius and Australian-style weather expectations.
@@ -313,12 +313,104 @@ Example `replenishment_output.json` structure:
 [
   {
     "branch_id": "BR001",
-    "branch_name": "Sydney Harbour Scoops",
+    "branch_name": "Sydney WesOnline",
     "city": "Sydney",
     "risk_level": "High",
     "reorder_needed": true,
-    "recommended_order_qty": 60,
+    "recommended_order_qty": 30,
     "confidence": "High",
-    "explanation": "Sydney forecast temperature of 31°C and strong recent sales indicate demand will exceed available stock."
+    "explanation": "Sydney forecast temperature of 31°C and strong recent sales indicate fan demand will exceed available stock."
   }
 ]
+
+
+
+# UI / Design System Rules
+
+You are redesigning an enterprise dashboard called "WesOnline-Demo".
+
+Goal:
+Create a professional, modern, responsive enterprise dashboard for an AI-powered replenishment system. The design must feel polished, credible, and boardroom-ready — not experimental, playful, or “vibe coded”.
+
+Brand direction:
+- Visual tone inspired by the corporate feel of Wesfarmers: restrained, confident, clean, high-trust
+- Use a deep corporate blue as the primary brand color
+- Use white and soft neutral backgrounds
+- Use accent colors sparingly for status only
+- Avoid bright gradients, neon colors, glossy effects, oversized shadows, or toy-like illustrations
+
+Product naming:
+- Rename the product from "Southern Scoops" to "WesOnline-Demo"
+- Update title, navbar, metadata, and all visible labels consistently
+
+Design principles:
+- Enterprise UX first
+- Strong information hierarchy
+- Generous whitespace
+- Clear typography scale
+- Consistent 8px spacing system
+- Subtle borders and restrained shadows
+- Clean card layout with clear section grouping
+- Responsive at mobile, tablet, laptop, and widescreen breakpoints
+- Accessibility-compliant contrast and focus states
+
+Layout requirements:
+- Responsive dashboard with a clean top header and content grid
+- On desktop: prioritize summary KPIs, recommendations, charts, and workflow status in a balanced layout
+- On tablet: stack sections logically without shrinking content too aggressively
+- On mobile: convert multi-column layout into a single-column flow with collapsible or tabbed sections where appropriate
+- Recommendations panel must remain readable and usable on smaller screens
+- Charts should resize gracefully and maintain legibility
+- Avoid fixed pixel widths where possible; prefer fluid layout with sensible max-widths
+
+Visual style:
+- No cartoonish, emoji-like, or mismatched icons
+- Use one professional icon set only, such as Lucide, Heroicons, or Material Symbols
+- Icons must be line-based or clean duotone, minimal, and consistent in stroke weight
+- Avoid random icon colors; icons should inherit semantic or neutral color roles
+- Use subtle hover, active, and selected states
+- Use rounded corners conservatively
+- Prefer clarity over decorative elements
+
+Components:
+- Header with product name: WesScoops
+- KPI cards with strong numeric emphasis and concise labels
+- Store status and replenishment recommendations with clean severity badges
+- Chart cards with simplified legends and cleaner axis labels
+- Workflow timeline shown as an enterprise activity log, not as decorative pills
+- Replace any placeholder or unfinished map behavior with either:
+  1. a polished static store overview component, or
+  2. a proper interactive map only if fully supported
+
+Status system:
+- Use semantic colors only for status:
+  - low risk / healthy = muted green
+  - medium attention = amber
+  - high risk = red
+  - informational = blue/neutral
+- Never use color alone; pair with text labels and icons
+
+Typography:
+- Use a clean sans-serif suitable for enterprise UI
+- Strong page title
+- Quiet secondary labels
+- Avoid all-caps except very small metadata labels if needed
+- Ensure readable font sizes on mobile
+
+Implementation requirements:
+- Refactor the UI into reusable components
+- Create a small design token system for colors, spacing, radius, border, shadow, and typography
+- Use CSS variables or theme tokens
+- Ensure dark mode is optional only if it can be done properly; otherwise ship a polished light theme first
+- Remove visual clutter and placeholder-looking UI
+- Do not generate novelty design elements
+
+Output requirements:
+- First provide:
+  1. design rationale
+  2. color token proposal
+  3. typography scale
+  4. responsive layout plan
+  5. icon system choice
+- Then generate the updated production-ready UI code
+- Finally, list what was changed to make the product look more enterprise-grade
