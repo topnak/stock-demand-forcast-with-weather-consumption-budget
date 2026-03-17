@@ -15,20 +15,20 @@
   let OUTPUT_BASE    = 'output';
   let AZURE_MAPS_KEY = '';
 
-  // Chart.js palette — restrained corporate colors
+  // Chart.js palette — Wesfarmers-inspired corporate greens
   const COLORS = {
-    blue:     '#1a56db',  blueBg:   'rgba(26,86,219,0.12)',
-    navy:     '#1e3a5f',  navyBg:   'rgba(30,58,95,0.1)',
-    green:    '#059669',  greenBg:  'rgba(5,150,105,0.1)',
-    red:      '#dc2626',  redBg:    'rgba(220,38,38,0.1)',
-    amber:    '#d97706',  amberBg:  'rgba(217,119,6,0.1)',
-    grey:     '#6b7280',  greyBg:   'rgba(107,114,128,0.08)',
-    teal:     '#0d9488',  tealBg:   'rgba(13,148,136,0.1)',
-    purple:   '#7c3aed',  purpleBg: 'rgba(124,58,237,0.1)'
+    blue:     '#00573F',  blueBg:   'rgba(0,87,63,0.12)',
+    navy:     '#003D2B',  navyBg:   'rgba(0,61,43,0.10)',
+    green:    '#2E7D32',  greenBg:  'rgba(46,125,50,0.10)',
+    red:      '#D32F2F',  redBg:    'rgba(211,47,47,0.10)',
+    amber:    '#F57C00',  amberBg:  'rgba(245,124,0,0.10)',
+    grey:     '#5c6a60',  greyBg:   'rgba(92,106,96,0.08)',
+    teal:     '#00897B',  tealBg:   'rgba(0,137,123,0.10)',
+    purple:   '#5E35B1',  purpleBg: 'rgba(94,53,177,0.10)'
   };
 
-  const BRANCH_COLORS = [COLORS.blue, COLORS.red, COLORS.green, COLORS.amber, COLORS.purple, COLORS.teal];
-  const BRANCH_BG     = [COLORS.blueBg, COLORS.redBg, COLORS.greenBg, COLORS.amberBg, COLORS.purpleBg, COLORS.tealBg];
+  const BRANCH_COLORS = [COLORS.blue, COLORS.green, COLORS.teal, COLORS.amber, COLORS.red, COLORS.purple];
+  const BRANCH_BG     = [COLORS.blueBg, COLORS.greenBg, COLORS.tealBg, COLORS.amberBg, COLORS.redBg, COLORS.purpleBg];
 
   // ---- Data fetching --------------------------------------------------------
   async function fetchJSON(base, file) {

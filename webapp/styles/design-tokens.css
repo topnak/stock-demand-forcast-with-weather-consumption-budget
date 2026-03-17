@@ -23,46 +23,50 @@
   --tracking-normal: 0;
   --tracking-wide: 0.01em;
 
-  /* Color Palette */
-  --color-bg-page: #f6f7fb;
-  --color-bg-page-alt: #f3f5f9;
-  --color-bg-card: rgba(255, 255, 255, 0.88);
+  /* Color Palette — Wesfarmers-inspired */
+  --color-bg-page: #f5f6f5;
+  --color-bg-page-alt: #eff0ef;
+  --color-bg-card: rgba(255, 255, 255, 0.92);
   --color-bg-card-solid: #ffffff;
-  --color-bg-glass: rgba(255, 255, 255, 0.72);
-  --color-bg-muted: #f8fafc;
+  --color-bg-glass: rgba(255, 255, 255, 0.76);
+  --color-bg-muted: #f4f7f5;
 
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #94a3b8;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #5c6a60;
+  --color-text-tertiary: #8d9990;
   --color-text-inverse: #ffffff;
 
-  --color-border-subtle: rgba(15, 23, 42, 0.06);
-  --color-border-soft: rgba(15, 23, 42, 0.08);
-  --color-border-strong: rgba(15, 23, 42, 0.14);
+  --color-border-subtle: rgba(0, 60, 40, 0.06);
+  --color-border-soft: rgba(0, 60, 40, 0.09);
+  --color-border-strong: rgba(0, 60, 40, 0.16);
 
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-soft: rgba(37, 99, 235, 0.1);
-  --color-primary-softer: rgba(37, 99, 235, 0.06);
+  --color-primary: #00573F;
+  --color-primary-hover: #004532;
+  --color-primary-soft: rgba(0, 87, 63, 0.10);
+  --color-primary-softer: rgba(0, 87, 63, 0.05);
 
-  --color-success: #22c55e;
-  --color-success-soft: rgba(34, 197, 94, 0.12);
+  --color-accent: #43A047;
+  --color-accent-hover: #388E3C;
+  --color-accent-soft: rgba(67, 160, 71, 0.12);
 
-  --color-warning: #f59e0b;
-  --color-warning-soft: rgba(245, 158, 11, 0.12);
+  --color-success: #2E7D32;
+  --color-success-soft: rgba(46, 125, 50, 0.12);
 
-  --color-danger: #ef4444;
-  --color-danger-soft: rgba(239, 68, 68, 0.12);
+  --color-warning: #F57C00;
+  --color-warning-soft: rgba(245, 124, 0, 0.12);
 
-  --color-info: #06b6d4;
-  --color-info-soft: rgba(6, 182, 212, 0.12);
+  --color-danger: #D32F2F;
+  --color-danger-soft: rgba(211, 47, 47, 0.12);
+
+  --color-info: #0288D1;
+  --color-info-soft: rgba(2, 136, 209, 0.12);
 
   /* Gradients */
-  --gradient-page: radial-gradient(circle at top, #ffffff 0%, #f4f6fb 55%, #eef2f7 100%);
-  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(247,248,250,0.92) 100%);
-  --gradient-card-hover: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(250,251,253,0.98) 100%);
-  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #4f8cff 100%);
-  --gradient-primary-soft: linear-gradient(135deg, rgba(37,99,235,0.10) 0%, rgba(79,140,255,0.16) 100%);
+  --gradient-page: radial-gradient(circle at top, #ffffff 0%, #f5f6f5 55%, #eef0ee 100%);
+  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(245,247,245,0.93) 100%);
+  --gradient-card-hover: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,248,0.98) 100%);
+  --gradient-primary: linear-gradient(135deg, #00573F 0%, #2E7D32 100%);
+  --gradient-primary-soft: linear-gradient(135deg, rgba(0,87,63,0.10) 0%, rgba(46,125,50,0.16) 100%);
 
   /* Spacing */
   --space-1: 4px;
@@ -88,11 +92,11 @@
   --radius-pill: 999px;
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
-  --shadow-xl: 0 24px 60px rgba(15, 23, 42, 0.16);
+  --shadow-xs: 0 1px 2px rgba(0, 40, 28, 0.04);
+  --shadow-sm: 0 4px 12px rgba(0, 40, 28, 0.05);
+  --shadow-md: 0 8px 30px rgba(0, 40, 28, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 40, 28, 0.12);
+  --shadow-xl: 0 24px 60px rgba(0, 40, 28, 0.16);
   --shadow-glow: 0 0 0 1px rgba(255,255,255,0.4) inset;
 
   /* Blur */
@@ -305,7 +309,7 @@ body {
 }
 
 .button-ghost:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(0, 60, 40, 0.04);
   color: var(--color-text-primary);
 }
 
