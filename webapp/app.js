@@ -15,20 +15,20 @@
   let OUTPUT_BASE    = 'output';
   let AZURE_MAPS_KEY = '';
 
-  // Chart.js palette — dark theme (emerald / cyan / violet)
+  // Chart.js palette — Wesfarmers corporate
   const COLORS = {
-    blue:     '#34d399',  blueBg:   'rgba(52,211,153,0.12)',
-    navy:     '#22d3ee',  navyBg:   'rgba(34,211,238,0.10)',
-    green:    '#34d399',  greenBg:  'rgba(52,211,153,0.10)',
-    red:      '#f87171',  redBg:    'rgba(248,113,113,0.10)',
-    amber:    '#fbbf24',  amberBg:  'rgba(251,191,36,0.10)',
-    grey:     '#64748b',  greyBg:   'rgba(100,116,139,0.08)',
-    teal:     '#22d3ee',  tealBg:   'rgba(34,211,238,0.10)',
-    purple:   '#a78bfa',  purpleBg: 'rgba(167,139,250,0.10)'
+    blue:     '#1a1a2e',  blueBg:   'rgba(26,26,46,0.08)',
+    navy:     '#C8102E',  navyBg:   'rgba(200,16,46,0.08)',
+    green:    '#059669',  greenBg:  'rgba(5,150,105,0.08)',
+    red:      '#dc2626',  redBg:    'rgba(220,38,38,0.08)',
+    amber:    '#d97706',  amberBg:  'rgba(217,119,6,0.08)',
+    grey:     '#6b7280',  greyBg:   'rgba(107,114,128,0.08)',
+    teal:     '#0d9488',  tealBg:   'rgba(13,148,136,0.08)',
+    purple:   '#7c3aed',  purpleBg: 'rgba(124,58,237,0.08)'
   };
 
-  const BRANCH_COLORS = [COLORS.blue, COLORS.teal, COLORS.purple, COLORS.amber, COLORS.red, COLORS.grey];
-  const BRANCH_BG     = [COLORS.blueBg, COLORS.tealBg, COLORS.purpleBg, COLORS.amberBg, COLORS.redBg, COLORS.greyBg];
+  const BRANCH_COLORS = [COLORS.blue, COLORS.navy, COLORS.green, COLORS.teal, COLORS.amber, COLORS.purple];
+  const BRANCH_BG     = [COLORS.blueBg, COLORS.navyBg, COLORS.greenBg, COLORS.tealBg, COLORS.amberBg, COLORS.purpleBg];
 
   // ---- Data fetching --------------------------------------------------------
   async function fetchJSON(base, file) {
@@ -190,7 +190,7 @@
         textField: ['get', 'name'],
         offset: [0, 1.2],
         size: 11,
-        color: '#f0f4f8',
+        color: '#1a1a2e',
         font: ['StandardFont-Bold']
       }
     }));
@@ -204,16 +204,16 @@
       var riskColor = props.risk === 'High' ? '#dc2626' : props.risk === 'Medium' ? '#d97706' : '#059669';
       popup.setOptions({
         position: e.shapes[0].getCoordinates(),
-        content: '<div style="padding:12px 14px;font-family:Inter,sans-serif;font-size:12px;min-width:180px;line-height:1.6;background:#1a2332;color:#f0f4f8;border-radius:8px;border:1px solid rgba(52,211,153,0.1)">'
+        content: '<div style="padding:12px 14px;font-family:Inter,sans-serif;font-size:12px;min-width:180px;line-height:1.6">'
           + '<div style="font-weight:700;font-size:13px;margin-bottom:6px">' + props.name + '</div>'
           + '<div style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;color:white;background:' + riskColor + ';margin-bottom:8px">' + props.risk + ' Risk</div>'
-          + '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">'
-          + '<div><span style="color:#94a3b8">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
-          + '<div><span style="color:#94a3b8">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
-          + '<div><span style="color:#94a3b8">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
-          + '<div><span style="color:#94a3b8">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
+          + '<div style="border-top:1px solid #e5e7eb;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">'
+          + '<div><span style="color:#718096">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
+          + '<div><span style="color:#718096">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
+          + '<div><span style="color:#718096">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
+          + '<div><span style="color:#718096">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
           + '</div>'
-          + '<div style="margin-top:6px;color:#94a3b8">' + props.temp + ' \u2014 ' + props.weather + '</div>'
+          + '<div style="margin-top:6px;color:#718096">' + props.temp + ' \u2014 ' + props.weather + '</div>'
           + '</div>'
       });
       popup.open(map);
@@ -227,7 +227,7 @@
   /** Fallback: render a simple HTML list when no Azure Maps key is set. */
   function renderFallbackMap(branches, riskMap) {
     const container = document.getElementById('azureMap');
-    container.style.background = '#111827';
+    container.style.background = '#f3f4f6';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
@@ -237,7 +237,7 @@
     container.style.overflowY = 'auto';
 
     const note = document.createElement('div');
-    note.style.cssText = 'font-size:0.78rem;color:#94a3b8;margin-bottom:6px;text-align:center;';
+    note.style.cssText = 'font-size:0.78rem;color:#718096;margin-bottom:6px;text-align:center;';
     note.textContent = 'Set AZURE_MAPS_KEY in config to enable the interactive map.';
     container.appendChild(note);
 
@@ -246,8 +246,8 @@
       const level = risk ? risk.risk_level : 'Low';
       const dotColor = level === 'High' ? '#dc2626' : level === 'Medium' ? '#d97706' : '#059669';
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;color:#f0f4f8;';
-      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#94a3b8;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;color:#1a1a2e;';
+      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#718096;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
       container.appendChild(row);
     });
   }
@@ -285,7 +285,7 @@
     const riskIconMap = { high: 'alert-triangle', medium: 'alert-circle', low: 'check-circle' };
     const confIconMap = { high: 'shield-check', medium: 'shield', low: 'shield-alert' };
 
-    container.innerHTML = '<div class="premium-list rec-list-animated">' + sorted.map((r, idx) => {
+    const cards = sorted.map((r, idx) => {
       const level = (r.risk_level || 'low').toLowerCase();
       const variant = badgeMap[level] || 'neutral';
       const fc = fcMap[r.branch_id] || {};
@@ -477,10 +477,111 @@
             <p class="rec-card__explanation-text">${sanitize(r.explanation)}</p>
           </div>` : ''}
         </div>`;
-    }).join('') + '</div>';
+    });
+
+    // Build carousel HTML
+    const cardsHtml = cards.map((html, idx) =>
+      `<div class="rec-carousel__card ${idx === 0 ? 'is-active' : 'is-hidden'}" data-index="${idx}">${html}</div>`
+    ).join('');
+
+    const dotsHtml = cards.map((_, idx) =>
+      `<button class="rec-carousel__dot ${idx === 0 ? 'rec-carousel__dot--active' : ''}" data-goto="${idx}" aria-label="Go to store ${idx + 1}"></button>`
+    ).join('');
+
+    container.innerHTML = `
+      <div class="rec-carousel" id="recCarousel">
+        <div class="rec-carousel__viewport">
+          ${cardsHtml}
+        </div>
+        <div class="rec-carousel__nav">
+          <button class="rec-carousel__arrow" data-dir="prev" aria-label="Previous store">
+            <i data-lucide="chevron-left" style="width:20px;height:20px"></i>
+          </button>
+          <div class="rec-carousel__dots">
+            ${dotsHtml}
+          </div>
+          <button class="rec-carousel__arrow" data-dir="next" aria-label="Next store">
+            <i data-lucide="chevron-right" style="width:20px;height:20px"></i>
+          </button>
+          <span class="rec-carousel__counter"><span id="carouselCurrent">1</span> / ${cards.length}</span>
+        </div>
+      </div>`;
 
     // Re-initialize Lucide icons for newly injected SVGs
     if (window.lucide) window.lucide.createIcons();
+
+    // Wire up carousel interactivity
+    initCarousel(cards.length);
+  }
+
+  // ---- Carousel Logic -------------------------------------------------------
+  let carouselIndex = 0;
+  let carouselAnimating = false;
+
+  function initCarousel(total) {
+    const carousel = document.getElementById('recCarousel');
+    if (!carousel) return;
+
+    carousel.addEventListener('click', function (e) {
+      const arrow = e.target.closest('.rec-carousel__arrow');
+      if (arrow) {
+        const dir = arrow.dataset.dir;
+        if (dir === 'next') goToCard((carouselIndex + 1) % total, 'next');
+        else goToCard((carouselIndex - 1 + total) % total, 'prev');
+        return;
+      }
+      const dot = e.target.closest('.rec-carousel__dot');
+      if (dot) {
+        const goto = parseInt(dot.dataset.goto, 10);
+        if (goto !== carouselIndex) goToCard(goto, goto > carouselIndex ? 'next' : 'prev');
+      }
+    });
+
+    // Keyboard navigation
+    carousel.setAttribute('tabindex', '0');
+    carousel.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') goToCard((carouselIndex + 1) % total, 'next');
+      else if (e.key === 'ArrowLeft') goToCard((carouselIndex - 1 + total) % total, 'prev');
+    });
+  }
+
+  function goToCard(newIndex, direction) {
+    if (carouselAnimating || newIndex === carouselIndex) return;
+    carouselAnimating = true;
+
+    const carousel = document.getElementById('recCarousel');
+    const allCards = carousel.querySelectorAll('.rec-carousel__card');
+    const oldCard = allCards[carouselIndex];
+    const newCard = allCards[newIndex];
+
+    // Set animation classes
+    const outClass = direction === 'next' ? 'slide-out-left' : 'slide-out-right';
+    const inClass  = direction === 'next' ? 'slide-in-right' : 'slide-in-left';
+
+    oldCard.classList.remove('is-active');
+    oldCard.classList.add(outClass);
+
+    newCard.classList.remove('is-hidden');
+    newCard.classList.add(inClass);
+
+    // Update dots
+    carousel.querySelectorAll('.rec-carousel__dot').forEach((d, i) => {
+      d.classList.toggle('rec-carousel__dot--active', i === newIndex);
+    });
+
+    // Update counter
+    const counter = document.getElementById('carouselCurrent');
+    if (counter) counter.textContent = newIndex + 1;
+
+    // After animation
+    setTimeout(function () {
+      oldCard.classList.remove(outClass);
+      oldCard.classList.add('is-hidden');
+      newCard.classList.remove(inClass);
+      newCard.classList.add('is-active');
+      carouselIndex = newIndex;
+      carouselAnimating = false;
+    }, 350);
   }
 
   // ---- Sales chart (daily time-series from sales_recent.json) ---------------
@@ -629,21 +730,21 @@
             padding: 16,
             usePointStyle: true,
             pointStyle: 'rectRounded',
-            color: '#94a3b8'
+            color: '#4a5568'
           }
         }
       },
       scales: {
         x: {
-          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#64748b' },
+          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#718096' },
           grid: { display: false },
           border: { display: false }
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#64748b' },
-          ticks: { font: { size: 11 }, color: '#64748b' },
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#718096' },
+          ticks: { font: { size: 11 }, color: '#718096' },
+          grid: { color: 'rgba(0,0,0,0.04)' },
           border: { display: false }
         }
       }
@@ -1070,11 +1171,22 @@ ${summary.summary || 'No summary available.'}`;
       container.querySelectorAll('.rec-filter-chip').forEach(c => c.classList.remove('rec-filter-chip--active'));
       chip.classList.add('rec-filter-chip--active');
       const filter = chip.dataset.filter;
-      document.querySelectorAll('.rec-card').forEach(card => {
-        if (filter === 'all') { card.style.display = ''; return; }
-        const isMatch = card.classList.contains('rec-card--' + ({ high: 'danger', medium: 'warning', low: 'success' }[filter] || ''));
-        card.style.display = isMatch ? '' : 'none';
+      const carousel = document.getElementById('recCarousel');
+      if (!carousel) return;
+      const allCards = carousel.querySelectorAll('.rec-carousel__card');
+      const filterMap = { high: 'danger', medium: 'warning', low: 'success' };
+      // Find first matching card and navigate to it
+      let firstMatch = -1;
+      allCards.forEach((card, i) => {
+        const recCard = card.querySelector('.rec-card');
+        if (!recCard) return;
+        if (filter === 'all') { firstMatch = firstMatch === -1 ? i : firstMatch; return; }
+        const isMatch = recCard.classList.contains('rec-card--' + (filterMap[filter] || ''));
+        if (isMatch && firstMatch === -1) firstMatch = i;
       });
+      if (firstMatch >= 0 && firstMatch !== carouselIndex) {
+        goToCard(firstMatch, firstMatch > carouselIndex ? 'next' : 'prev');
+      }
     });
   }
 
@@ -1142,7 +1254,7 @@ ${summary.summary || 'No summary available.'}`;
             ctx.beginPath();
             ctx.moveTo(dots[i].x, dots[i].y);
             ctx.lineTo(dots[j].x, dots[j].y);
-            ctx.strokeStyle = `rgba(52,211,153,${0.12 * (1 - dist / 120)})`;
+            ctx.strokeStyle = `rgba(255,255,255,${0.12 * (1 - dist / 120)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -1152,7 +1264,7 @@ ${summary.summary || 'No summary available.'}`;
       dots.forEach(d => {
         ctx.beginPath();
         ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(52,211,153,0.3)';
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
         ctx.fill();
         d.x += d.vx;
         d.y += d.vy;
@@ -1180,6 +1292,10 @@ ${summary.summary || 'No summary available.'}`;
       } catch (e) {
         console.warn('Could not load /api/config, using defaults:', e.message);
       }
+
+      // Fallback: read from env.js if server config didn't provide the key
+      const env = window.__ENV__ || {};
+      if (!AZURE_MAPS_KEY && env.AZURE_MAPS_KEY) AZURE_MAPS_KEY = env.AZURE_MAPS_KEY;
 
       const data = await loadAllData();
       dashboardData = data;
