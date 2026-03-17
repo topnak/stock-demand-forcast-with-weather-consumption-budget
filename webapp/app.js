@@ -15,20 +15,20 @@
   let OUTPUT_BASE    = 'output';
   let AZURE_MAPS_KEY = '';
 
-  // Chart.js palette — Wesfarmers-inspired corporate greens
+  // Chart.js palette — dark theme (emerald / cyan / violet)
   const COLORS = {
-    blue:     '#00573F',  blueBg:   'rgba(0,87,63,0.12)',
-    navy:     '#003D2B',  navyBg:   'rgba(0,61,43,0.10)',
-    green:    '#2E7D32',  greenBg:  'rgba(46,125,50,0.10)',
-    red:      '#D32F2F',  redBg:    'rgba(211,47,47,0.10)',
-    amber:    '#F57C00',  amberBg:  'rgba(245,124,0,0.10)',
-    grey:     '#5c6a60',  greyBg:   'rgba(92,106,96,0.08)',
-    teal:     '#00897B',  tealBg:   'rgba(0,137,123,0.10)',
-    purple:   '#5E35B1',  purpleBg: 'rgba(94,53,177,0.10)'
+    blue:     '#34d399',  blueBg:   'rgba(52,211,153,0.12)',
+    navy:     '#22d3ee',  navyBg:   'rgba(34,211,238,0.10)',
+    green:    '#34d399',  greenBg:  'rgba(52,211,153,0.10)',
+    red:      '#f87171',  redBg:    'rgba(248,113,113,0.10)',
+    amber:    '#fbbf24',  amberBg:  'rgba(251,191,36,0.10)',
+    grey:     '#64748b',  greyBg:   'rgba(100,116,139,0.08)',
+    teal:     '#22d3ee',  tealBg:   'rgba(34,211,238,0.10)',
+    purple:   '#a78bfa',  purpleBg: 'rgba(167,139,250,0.10)'
   };
 
-  const BRANCH_COLORS = [COLORS.blue, COLORS.green, COLORS.teal, COLORS.amber, COLORS.red, COLORS.purple];
-  const BRANCH_BG     = [COLORS.blueBg, COLORS.greenBg, COLORS.tealBg, COLORS.amberBg, COLORS.redBg, COLORS.purpleBg];
+  const BRANCH_COLORS = [COLORS.blue, COLORS.teal, COLORS.purple, COLORS.amber, COLORS.red, COLORS.grey];
+  const BRANCH_BG     = [COLORS.blueBg, COLORS.tealBg, COLORS.purpleBg, COLORS.amberBg, COLORS.redBg, COLORS.greyBg];
 
   // ---- Data fetching --------------------------------------------------------
   async function fetchJSON(base, file) {
@@ -82,11 +82,36 @@
     // Total predicted demand tomorrow
     const totalPredicted = forecast.reduce((s, f) => s + (f.baseline_forecast_units || 0), 0);
 
-    setText('kpiBranches', branchCount);
-    setText('kpiFlagged', highRisk);
-    setText('kpiReorderQty', totalQty.toLocaleString());
-    setText('kpiTotalPredicted', Math.round(totalPredicted).toLocaleString());
-    setText('kpiAvgTemp', avgTemp);
+    // "Stores need action" = how many have reorder_needed=true
+    const actionCount = repl.filter(r => r.reorder_needed).length;
+
+    // Confidence: use most common from repl
+    const confCounts = {};
+    repl.forEach(r => { const c = (r.confidence || 'Medium'); confCounts[c] = (confCounts[c] || 0) + 1; });
+    const planConfidence = Object.keys(confCounts).sort((a, b) => confCounts[b] - confCounts[a])[0] || '\u2014';
+
+    // Coverage: percent of branches that don't need reorder
+    const covered = repl.filter(r => !r.reorder_needed).length;
+    const coveragePct = branchCount > 0 ? Math.round((covered / branchCount) * 100) + '%' : '\u2014';
+
+    // Micro detail strings
+    const hotCount = temps.filter(t => t > 30).length;
+    const demandMicro = forecast.length
+      ? `Highest: ${[...forecast].sort((a, b) => (b.baseline_forecast_units || 0) - (a.baseline_forecast_units || 0))[0].city}`
+      : '';
+    const weatherMicro = hotCount > 0 ? `${hotCount} city${hotCount > 1 ? 's' : ''} above 30\u00b0C` : 'No extreme heat';
+
+    // Populate all KPI slots
+    animateCountUp('kpiBranchesAction', actionCount);
+    animateCountUp('kpiFlagged', highRisk);
+    animateCountUp('kpiReorderQty', totalQty);
+    animateCountUp('kpiTotalPredicted', Math.round(totalPredicted));
+    setText('kpiAvgTemp', avgTemp + '\u00b0');
+    animateCountUp('kpiBranches', branchCount);
+    setText('kpiConfidence', planConfidence);
+    setText('kpiCoverage', coveragePct);
+    setText('kpiDemandMicro', demandMicro);
+    setText('kpiWeatherMicro', weatherMicro);
     setText('mapBranchCount', branchCount ? branchCount + ' stores' : '');
   }
 
@@ -165,7 +190,7 @@
         textField: ['get', 'name'],
         offset: [0, 1.2],
         size: 11,
-        color: '#111827',
+        color: '#f0f4f8',
         font: ['StandardFont-Bold']
       }
     }));
@@ -179,16 +204,16 @@
       var riskColor = props.risk === 'High' ? '#dc2626' : props.risk === 'Medium' ? '#d97706' : '#059669';
       popup.setOptions({
         position: e.shapes[0].getCoordinates(),
-        content: '<div style="padding:12px 14px;font-family:Inter,sans-serif;font-size:12px;min-width:180px;line-height:1.6">'
+        content: '<div style="padding:12px 14px;font-family:Inter,sans-serif;font-size:12px;min-width:180px;line-height:1.6;background:#1a2332;color:#f0f4f8;border-radius:8px;border:1px solid rgba(52,211,153,0.1)">'
           + '<div style="font-weight:700;font-size:13px;margin-bottom:6px">' + props.name + '</div>'
           + '<div style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;color:white;background:' + riskColor + ';margin-bottom:8px">' + props.risk + ' Risk</div>'
-          + '<div style="border-top:1px solid #e5e7eb;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">'
-          + '<div><span style="color:#6b7280">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
-          + '<div><span style="color:#6b7280">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
-          + '<div><span style="color:#6b7280">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
-          + '<div><span style="color:#6b7280">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
+          + '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">'
+          + '<div><span style="color:#94a3b8">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
+          + '<div><span style="color:#94a3b8">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
+          + '<div><span style="color:#94a3b8">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
+          + '<div><span style="color:#94a3b8">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
           + '</div>'
-          + '<div style="margin-top:6px;color:#6b7280">' + props.temp + ' \u2014 ' + props.weather + '</div>'
+          + '<div style="margin-top:6px;color:#94a3b8">' + props.temp + ' \u2014 ' + props.weather + '</div>'
           + '</div>'
       });
       popup.open(map);
@@ -202,7 +227,7 @@
   /** Fallback: render a simple HTML list when no Azure Maps key is set. */
   function renderFallbackMap(branches, riskMap) {
     const container = document.getElementById('azureMap');
-    container.style.background = '#e8f4fd';
+    container.style.background = '#111827';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
@@ -212,8 +237,8 @@
     container.style.overflowY = 'auto';
 
     const note = document.createElement('div');
-    note.style.cssText = 'font-size:0.78rem;color:#616161;margin-bottom:6px;text-align:center;';
-    note.textContent = 'Set AZURE_MAPS_KEY in config.js (via window.__ENV__) to enable the interactive map.';
+    note.style.cssText = 'font-size:0.78rem;color:#94a3b8;margin-bottom:6px;text-align:center;';
+    note.textContent = 'Set AZURE_MAPS_KEY in config to enable the interactive map.';
     container.appendChild(note);
 
     branches.forEach(b => {
@@ -221,8 +246,8 @@
       const level = risk ? risk.risk_level : 'Low';
       const dotColor = level === 'High' ? '#dc2626' : level === 'Medium' ? '#d97706' : '#059669';
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;';
-      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#6b7280;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;color:#f0f4f8;';
+      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#94a3b8;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
       container.appendChild(row);
     });
   }
@@ -603,21 +628,22 @@
             boxHeight: 12,
             padding: 16,
             usePointStyle: true,
-            pointStyle: 'rectRounded'
+            pointStyle: 'rectRounded',
+            color: '#94a3b8'
           }
         }
       },
       scales: {
         x: {
-          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#6b7280' },
+          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#64748b' },
           grid: { display: false },
           border: { display: false }
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#6b7280' },
-          ticks: { font: { size: 11 }, color: '#6b7280' },
-          grid: { color: 'rgba(0,0,0,0.04)' },
+          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#64748b' },
+          ticks: { font: { size: 11 }, color: '#64748b' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
           border: { display: false }
         }
       }
@@ -940,6 +966,205 @@ ${summary.summary || 'No summary available.'}`;
     return 'I can answer questions about branch risk, stock levels, weather forecasts, demand predictions, reorder recommendations, and the latest nightly workflow run. Try asking about a specific city or topic!';
   }
 
+  // ---- AI Summary Banner ----------------------------------------------------
+  function renderAISummary(data) {
+    const repl = data.replenishmentoutput || [];
+    const forecast = data.forecastoutput || [];
+    const el = document.getElementById('aiBannerText');
+    if (!el) return;
+
+    if (!repl.length) {
+      el.innerHTML = 'No run data available yet. Waiting for the next nightly planning cycle.';
+      return;
+    }
+
+    const high = repl.filter(r => (r.risk_level || '').toLowerCase() === 'high');
+    const totalQty = repl.reduce((s, r) => s + (r.recommended_order_qty || 0), 0);
+    const temps = forecast.map(f => f.tomorrow_max_temp_c).filter(Boolean);
+    const maxTemp = temps.length ? Math.max(...temps) : null;
+    const hotCity = maxTemp ? forecast.find(f => f.tomorrow_max_temp_c === maxTemp) : null;
+
+    let msg = `<strong>${repl.length} stores</strong> analyzed. `;
+    if (high.length) {
+      msg += `<strong>${high.length} high-risk</strong> store${high.length > 1 ? 's' : ''} flagged — `;
+      msg += high.map(h => h.city).join(', ') + '. ';
+    } else {
+      msg += 'All stores are within safe stock levels. ';
+    }
+    if (totalQty > 0) msg += `Total reorder: <strong>${totalQty} units</strong>. `;
+    if (hotCity) msg += `Hottest: ${hotCity.city} at <strong>${maxTemp}\u00b0C</strong>.`;
+
+    el.innerHTML = msg;
+  }
+
+  // ---- Run Strip ------------------------------------------------------------
+  function renderRunStrip(data) {
+    const runs = data.workflowruns || [];
+    if (!runs.length) return;
+
+    const last = [...runs].sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0))[0];
+
+    setText('runTime', formatTimestamp(last.started_at || last.timestamp || ''));
+    setText('runStatus', last.status || '\u2014');
+    setText('runDuration', last.duration_seconds ? last.duration_seconds + 's' : '\u2014');
+    setText('runStores', last.branches_evaluated || '\u2014');
+    setText('runFlagged', last.flagged_branches || '0');
+    setText('lastRunLabel', formatTimestamp(last.started_at || last.timestamp || ''));
+
+    // Color the status
+    const statusEl = document.getElementById('runStatus');
+    if (statusEl) {
+      statusEl.classList.toggle('run-strip__value--success', (last.status || '').toLowerCase() === 'succeeded');
+      statusEl.classList.toggle('run-strip__value--danger', (last.status || '').toLowerCase() !== 'succeeded');
+    }
+  }
+
+  // ---- Weather Grid (insight tab) ------------------------------------------
+  function renderWeatherGrid(data) {
+    const forecast = data.forecastoutput || [];
+    const el = document.getElementById('weatherGrid');
+    if (!el || !forecast.length) return;
+
+    el.innerHTML = forecast.map(f => {
+      const temp = f.tomorrow_max_temp_c;
+      const tempClass = temp > 30 ? 'hot' : temp >= 27 ? 'warm' : 'mild';
+      let uplift = '';
+      let upliftStyle = '';
+      if (temp > 30) { uplift = '+22%'; upliftStyle = 'background:rgba(248,113,113,0.12);color:#f87171'; }
+      else if (temp >= 27) { uplift = '+12%'; upliftStyle = 'background:rgba(251,191,36,0.12);color:#fbbf24'; }
+      else { uplift = '0%'; upliftStyle = 'background:rgba(100,116,139,0.1);color:#64748b'; }
+
+      return `
+        <div class="weather-card">
+          <div class="weather-card__city">${sanitize(f.city || f.branch_name)}</div>
+          <div class="weather-card__temp weather-card__temp--${tempClass}">${temp}\u00b0C</div>
+          <div class="weather-card__condition">${sanitize(f.weather_condition || '')}</div>
+          <div class="weather-card__uplift" style="${upliftStyle}">Heat uplift: ${uplift}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---- Insight Tabs ---------------------------------------------------------
+  function initInsightTabs() {
+    const nav = document.getElementById('insightTabNav');
+    if (!nav) return;
+    nav.addEventListener('click', function (e) {
+      const btn = e.target.closest('.insight-tab');
+      if (!btn) return;
+      const tabId = btn.dataset.tab;
+      nav.querySelectorAll('.insight-tab').forEach(t => t.classList.remove('insight-tab--active'));
+      btn.classList.add('insight-tab--active');
+      document.querySelectorAll('.insight-pane').forEach(p => p.classList.remove('insight-pane--active'));
+      const pane = document.getElementById('pane-' + tabId);
+      if (pane) pane.classList.add('insight-pane--active');
+    });
+  }
+
+  // ---- Rec Filter Chips -----------------------------------------------------
+  function initRecFilters() {
+    const container = document.getElementById('recFilters');
+    if (!container) return;
+    container.addEventListener('click', function (e) {
+      const chip = e.target.closest('.rec-filter-chip');
+      if (!chip) return;
+      container.querySelectorAll('.rec-filter-chip').forEach(c => c.classList.remove('rec-filter-chip--active'));
+      chip.classList.add('rec-filter-chip--active');
+      const filter = chip.dataset.filter;
+      document.querySelectorAll('.rec-card').forEach(card => {
+        if (filter === 'all') { card.style.display = ''; return; }
+        const isMatch = card.classList.contains('rec-card--' + ({ high: 'danger', medium: 'warning', low: 'success' }[filter] || ''));
+        card.style.display = isMatch ? '' : 'none';
+      });
+    });
+  }
+
+  // ---- Count-Up Animation ---------------------------------------------------
+  function animateCountUp(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const num = parseInt(target, 10);
+    if (isNaN(num) || num === 0) { el.textContent = target; return; }
+    const duration = 800;
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      el.textContent = Math.round(eased * num).toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---- Prompt Pills ---------------------------------------------------------
+  function askPrompt(btn) {
+    const text = btn.textContent.trim();
+    if (!text) return;
+    // Open chat if not open
+    if (!chatOpen) toggleChat();
+    const input = document.getElementById('chatInput');
+    input.value = text;
+    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+  }
+
+  // ---- Hero Canvas (ambient dot network) -----------------------------------
+  function renderHeroCanvas() {
+    const canvas = document.getElementById('heroCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const wrapper = canvas.parentElement;
+    let w, h, dots = [];
+
+    function resize() {
+      w = wrapper.offsetWidth;
+      h = wrapper.offsetHeight;
+      canvas.width = w * devicePixelRatio;
+      canvas.height = h * devicePixelRatio;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+    }
+    resize();
+
+    // Create dots
+    for (let i = 0; i < 40; i++) {
+      dots.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, r: 2 + Math.random() * 2 });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      // Lines
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          const dx = dots[i].x - dots[j].x;
+          const dy = dots[i].y - dots[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x, dots[i].y);
+            ctx.lineTo(dots[j].x, dots[j].y);
+            ctx.strokeStyle = `rgba(52,211,153,${0.12 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      // Dots
+      dots.forEach(d => {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(52,211,153,0.3)';
+        ctx.fill();
+        d.x += d.vx;
+        d.y += d.vy;
+        if (d.x < 0 || d.x > w) d.vx *= -1;
+        if (d.y < 0 || d.y > h) d.vy *= -1;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+    window.addEventListener('resize', resize);
+  }
+
   // ---- Bootstrap (updated) --------------------------------------------------
   async function init() {
     try {
@@ -960,10 +1185,13 @@ ${summary.summary || 'No summary available.'}`;
       dashboardData = data;
 
       renderKPIs(data);
+      renderAISummary(data);
+      renderRunStrip(data);
       renderMap(data);
       renderRecommendations(data);
       renderSalesChart(data);
       renderStockChart(data);
+      renderWeatherGrid(data);
       renderTimeline(data);
     } catch (err) {
       console.error('Dashboard init error:', err);
@@ -971,9 +1199,12 @@ ${summary.summary || 'No summary available.'}`;
   }
 
   // Expose API
-  window.app = { refresh: init, toggleChat: toggleChat };
+  window.app = { refresh: init, toggleChat: toggleChat, askPrompt: askPrompt };
 
   // Go
   initChat();
+  initInsightTabs();
+  initRecFilters();
+  renderHeroCanvas();
   init();
 })();

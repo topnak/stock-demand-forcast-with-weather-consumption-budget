@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WesOnline-Demo — Replenishment Dashboard</title>
+  <title>WesOnline — AI Command Center</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
@@ -30,13 +30,16 @@
   <!-- ===== Header ===== -->
   <header class="app-header">
     <div class="header-brand">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+      <div class="header-brand-icon">
+        <i data-lucide="activity" style="width:18px;height:18px"></i>
+      </div>
       <span class="header-brand-name">WesOnline</span>
-      <span class="header-brand-tag">Demo</span>
+      <span class="header-brand-tag">AI</span>
     </div>
     <div class="header-spacer"></div>
-    <div class="header-meta" id="headerMeta">
-      Last run: <strong id="lastRunLabel">—</strong>
+    <div class="header-status" id="headerStatus">
+      <span class="header-status-dot"></span>
+      <span id="lastRunLabel">Connecting&hellip;</span>
     </div>
     <div class="header-actions">
       <button class="btn-header" onclick="window.app.refresh()" title="Refresh data">
@@ -49,141 +52,232 @@
   <!-- ===== Dashboard ===== -->
   <main class="page-shell">
 
-    <!-- Page header -->
-    <div class="premium-page-header">
-      <div class="premium-page-header__content">
-        <h1 class="premium-page-header__title">Replenishment Dashboard</h1>
-        <p class="premium-page-header__subtitle">Nightly AI-powered demand forecasting and stock replenishment across all WesOnline stores.</p>
-      </div>
-    </div>
-
-    <!-- KPI row -->
-    <section class="page-section" id="kpiRow">
-      <div class="premium-kpi-grid">
-        <div class="premium-kpi-card" title="Number of active store branches included in tonight's replenishment run.">
-          <div class="premium-kpi-card__content">
-            <span class="premium-kpi-card__eyebrow">Branches</span>
-            <p class="premium-kpi-card__value" id="kpiBranches">—</p>
-            <span class="premium-kpi-card__label">Active stores</span>
+    <!-- ── HERO ── -->
+    <section class="hero" id="heroSection">
+      <div class="hero__content">
+        <div class="hero__text">
+          <h1 class="hero__headline">Tomorrow's stock,<br><span class="hero__headline-accent">planned tonight.</span></h1>
+          <p class="hero__subtitle">AI-powered demand forecasting and autonomous replenishment across all WesOnline stores — driven by weather, sales trends, and real-time inventory.</p>
+          <div class="hero__actions">
+            <button class="btn-hero btn-hero--primary" onclick="window.app.refresh()">
+              <i data-lucide="refresh-cw" style="width:15px;height:15px"></i>
+              Refresh Run
+            </button>
+            <button class="btn-hero btn-hero--secondary" onclick="document.getElementById('recsSection').scrollIntoView({behavior:'smooth'})">
+              <i data-lucide="alert-triangle" style="width:15px;height:15px"></i>
+              High-Risk Stores
+            </button>
+            <button class="btn-hero btn-hero--ghost" onclick="window.app.toggleChat()">
+              <i data-lucide="sparkles" style="width:15px;height:15px"></i>
+              Ask Copilot
+            </button>
           </div>
-          <div class="premium-kpi-card__icon"><i data-lucide="store" style="width:24px;height:24px"></i></div>
         </div>
-        <div class="premium-kpi-card premium-kpi-card--danger" title="Branches where stock may not meet tomorrow's demand, flagged as high risk by the AI agent.">
-          <div class="premium-kpi-card__content">
-            <span class="premium-kpi-card__eyebrow">High Risk</span>
-            <p class="premium-kpi-card__value" id="kpiFlagged">—</p>
-            <span class="premium-kpi-card__label">Branches flagged</span>
-          </div>
-          <div class="premium-kpi-card__icon"><i data-lucide="alert-triangle" style="width:24px;height:24px"></i></div>
-        </div>
-        <div class="premium-kpi-card premium-kpi-card--warning" title="Total units the AI agent recommends ordering across all branches to cover tomorrow's demand.">
-          <div class="premium-kpi-card__content">
-            <span class="premium-kpi-card__eyebrow">Reorder Units</span>
-            <p class="premium-kpi-card__value" id="kpiReorderQty">—</p>
-            <span class="premium-kpi-card__label">Total recommended</span>
-          </div>
-          <div class="premium-kpi-card__icon"><i data-lucide="package" style="width:24px;height:24px"></i></div>
-        </div>
-        <div class="premium-kpi-card" title="Total predicted customer demand across all branches for tomorrow, based on sales trends and weather uplift.">
-          <div class="premium-kpi-card__content">
-            <span class="premium-kpi-card__eyebrow">Total Predicted</span>
-            <p class="premium-kpi-card__value" id="kpiTotalPredicted">&mdash;</p>
-            <span class="premium-kpi-card__label">Units forecast tomorrow</span>
-          </div>
-          <div class="premium-kpi-card__icon"><i data-lucide="bar-chart-3" style="width:24px;height:24px"></i></div>
-        </div>
-        <div class="premium-kpi-card premium-kpi-card--success" title="Average forecast high temperature across all branch cities for tomorrow.">
-          <div class="premium-kpi-card__content">
-            <span class="premium-kpi-card__eyebrow">Avg Temp</span>
-            <p class="premium-kpi-card__value" id="kpiAvgTemp">—</p>
-            <span class="premium-kpi-card__label">Forecast &deg;C</span>
-          </div>
-          <div class="premium-kpi-card__icon"><i data-lucide="thermometer" style="width:24px;height:24px"></i></div>
+        <div class="hero__visual" id="heroVisual">
+          <!-- Animated network visual rendered by JS -->
+          <div class="hero__glow"></div>
+          <canvas id="heroCanvas"></canvas>
         </div>
       </div>
     </section>
 
-    <!-- Map + Recommendations row -->
-    <section class="page-section dashboard-content-grid">
+    <!-- ── AI SUMMARY BANNER ── -->
+    <div class="ai-banner" id="aiBanner">
+      <div class="ai-banner__icon"><i data-lucide="sparkles" style="width:16px;height:16px"></i></div>
+      <p class="ai-banner__text" id="aiBannerText">Analyzing latest run data&hellip;</p>
+    </div>
 
-      <!-- Map -->
+    <!-- ── KPI CARDS ── -->
+    <section class="page-section" id="kpiSection">
+      <div class="kpi-grid">
+        <!-- Headline KPI -->
+        <div class="kpi-card-v2 kpi-card-v2--headline" id="kpiHeadline">
+          <div class="kpi-card-v2__eyebrow">Tonight's AI Plan</div>
+          <div class="kpi-card-v2__hero-row">
+            <span class="kpi-card-v2__big-number" data-countup id="kpiBranchesAction">—</span>
+            <span class="kpi-card-v2__big-label">stores need action</span>
+          </div>
+          <div class="kpi-card-v2__sub-stats">
+            <div class="kpi-card-v2__sub-stat">
+              <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--danger" data-countup id="kpiFlagged">—</span>
+              <span class="kpi-card-v2__sub-label">high-risk</span>
+            </div>
+            <div class="kpi-card-v2__sub-stat">
+              <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--accent" data-countup id="kpiReorderQty">—</span>
+              <span class="kpi-card-v2__sub-label">units to reorder</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medium: Demand Forecast -->
+        <div class="kpi-card-v2 kpi-card-v2--medium">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--accent"><i data-lucide="trending-up" style="width:20px;height:20px"></i></div>
+          <div class="kpi-card-v2__eyebrow">Demand Forecast</div>
+          <div class="kpi-card-v2__value" data-countup id="kpiTotalPredicted">—</div>
+          <div class="kpi-card-v2__label">units predicted tomorrow</div>
+          <div class="kpi-card-v2__micro" id="kpiDemandMicro"></div>
+        </div>
+
+        <!-- Medium: Weather Impact -->
+        <div class="kpi-card-v2 kpi-card-v2--medium">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--warning"><i data-lucide="thermometer" style="width:20px;height:20px"></i></div>
+          <div class="kpi-card-v2__eyebrow">Weather Impact</div>
+          <div class="kpi-card-v2__value" data-countup id="kpiAvgTemp">—</div>
+          <div class="kpi-card-v2__label">avg forecast &deg;C</div>
+          <div class="kpi-card-v2__micro" id="kpiWeatherMicro"></div>
+        </div>
+
+        <!-- Compact: Branches -->
+        <div class="kpi-card-v2 kpi-card-v2--compact">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--primary"><i data-lucide="store" style="width:16px;height:16px"></i></div>
+          <div>
+            <div class="kpi-card-v2__value kpi-card-v2__value--sm" data-countup id="kpiBranches">—</div>
+            <div class="kpi-card-v2__label">stores analyzed</div>
+          </div>
+        </div>
+
+        <!-- Compact: Confidence -->
+        <div class="kpi-card-v2 kpi-card-v2--compact">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--info"><i data-lucide="shield-check" style="width:16px;height:16px"></i></div>
+          <div>
+            <div class="kpi-card-v2__value kpi-card-v2__value--sm" id="kpiConfidence">—</div>
+            <div class="kpi-card-v2__label">plan confidence</div>
+          </div>
+        </div>
+
+        <!-- Compact: Coverage -->
+        <div class="kpi-card-v2 kpi-card-v2--compact">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--success"><i data-lucide="check-circle" style="width:16px;height:16px"></i></div>
+          <div>
+            <div class="kpi-card-v2__value kpi-card-v2__value--sm" id="kpiCoverage">—</div>
+            <div class="kpi-card-v2__label">service coverage</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LAST RUN STRIP ── -->
+    <section class="run-strip" id="runStrip">
+      <div class="run-strip__item">
+        <span class="run-strip__label">Last Run</span>
+        <span class="run-strip__value" id="runTime">—</span>
+      </div>
+      <div class="run-strip__divider"></div>
+      <div class="run-strip__item">
+        <span class="run-strip__label">Status</span>
+        <span class="run-strip__value" id="runStatus">—</span>
+      </div>
+      <div class="run-strip__divider"></div>
+      <div class="run-strip__item">
+        <span class="run-strip__label">Duration</span>
+        <span class="run-strip__value" id="runDuration">—</span>
+      </div>
+      <div class="run-strip__divider"></div>
+      <div class="run-strip__item">
+        <span class="run-strip__label">Stores</span>
+        <span class="run-strip__value" id="runStores">—</span>
+      </div>
+      <div class="run-strip__divider"></div>
+      <div class="run-strip__item">
+        <span class="run-strip__label">Flagged</span>
+        <span class="run-strip__value run-strip__value--danger" id="runFlagged">—</span>
+      </div>
+      <div class="run-strip__divider"></div>
+      <div class="run-strip__item">
+        <span class="run-strip__label">Model</span>
+        <span class="run-strip__value" id="runModel">GPT-4o</span>
+      </div>
+    </section>
+
+    <!-- ── RECOMMENDATIONS (centerpiece) ── -->
+    <section class="page-section" id="recsSection">
+      <div class="section-header-v2">
+        <div class="section-header-v2__left">
+          <div class="section-header-v2__icon section-header-v2__icon--danger"><i data-lucide="brain" style="width:22px;height:22px"></i></div>
+          <div>
+            <h2 class="section-header-v2__title">Replenishment Recommendations</h2>
+            <p class="section-header-v2__meta">AI-ranked by urgency and risk</p>
+          </div>
+        </div>
+        <div class="rec-filters" id="recFilters">
+          <button class="rec-filter-chip rec-filter-chip--active" data-filter="all">All</button>
+          <button class="rec-filter-chip" data-filter="high">High Risk</button>
+          <button class="rec-filter-chip" data-filter="medium">Medium</button>
+          <button class="rec-filter-chip" data-filter="low">Low</button>
+        </div>
+      </div>
+      <div id="recList">
+        <div class="premium-empty-state">
+          <div class="premium-empty-state__icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>
+          <p class="premium-empty-state__text">Loading recommendations&hellip;</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MAP ── -->
+    <section class="page-section">
       <div class="premium-visual-card dashboard-map">
         <div class="premium-visual-card__header">
           <div class="premium-section-header__left">
             <div class="premium-section-header__icon"><i data-lucide="map-pin" style="width:20px;height:20px"></i></div>
             <div>
-              <h2 class="premium-section-header__title">Store Locations</h2>
+              <h2 class="premium-section-header__title">Regional Risk Map</h2>
               <p class="premium-section-header__meta" id="mapBranchCount"></p>
             </div>
           </div>
         </div>
         <div class="premium-visual-card__body" id="azureMap"></div>
       </div>
-
-      <!-- Recommendations -->
-      <div class="premium-panel dashboard-recs">
-        <div class="premium-panel__header">
-          <div class="premium-section-header__left">
-            <div class="premium-section-header__icon premium-section-header__icon--warning"><i data-lucide="brain" style="width:20px;height:20px"></i></div>
-            <h2 class="premium-section-header__title">Replenishment Recommendations</h2>
-          </div>
-        </div>
-        <div class="premium-panel__body premium-panel__body--tight" id="recList">
-          <div class="premium-empty-state">
-            <div class="premium-empty-state__icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>
-            <p class="premium-empty-state__text">Loading recommendations&hellip;</p>
-          </div>
-        </div>
-      </div>
-
     </section>
 
-    <!-- Charts row -->
-    <section class="page-section dashboard-charts-grid">
-
-      <!-- Sales chart -->
-      <div class="premium-panel">
-        <div class="premium-panel__header">
-          <div class="premium-section-header__left">
-            <div class="premium-section-header__icon"><i data-lucide="trending-up" style="width:20px;height:20px"></i></div>
-            <h2 class="premium-section-header__title">Sales Trend</h2>
-          </div>
-          <span class="premium-badge premium-badge--neutral">Last 14 days</span>
-        </div>
-        <div class="premium-panel__body">
-          <div class="chart-container"><canvas id="salesChart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Stock chart -->
-      <div class="premium-panel">
-        <div class="premium-panel__header">
-          <div class="premium-section-header__left">
-            <div class="premium-section-header__icon premium-section-header__icon--success"><i data-lucide="boxes" style="width:20px;height:20px"></i></div>
-            <h2 class="premium-section-header__title">Inventory Overview</h2>
-          </div>
-        </div>
-        <div class="premium-panel__body">
-          <div class="chart-container"><canvas id="stockChart"></canvas></div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Workflow timeline -->
+    <!-- ── INSIGHT TABS (Demand / Inventory / Weather) ── -->
     <section class="page-section">
-      <div class="premium-panel">
-        <div class="premium-panel__header">
-          <div class="premium-section-header__left">
-            <div class="premium-section-header__icon premium-section-header__icon--neutral"><i data-lucide="activity" style="width:20px;height:20px"></i></div>
-            <h2 class="premium-section-header__title">Workflow Activity</h2>
+      <div class="insight-tabs">
+        <div class="insight-tabs__header">
+          <div class="section-header-v2__left">
+            <div class="section-header-v2__icon section-header-v2__icon--accent"><i data-lucide="bar-chart-3" style="width:22px;height:22px"></i></div>
+            <h2 class="section-header-v2__title">Insights &amp; Drivers</h2>
+          </div>
+          <div class="insight-tabs__nav" id="insightTabNav">
+            <button class="insight-tab insight-tab--active" data-tab="demand">
+              <i data-lucide="trending-up" style="width:14px;height:14px"></i> Demand
+            </button>
+            <button class="insight-tab" data-tab="inventory">
+              <i data-lucide="boxes" style="width:14px;height:14px"></i> Inventory
+            </button>
+            <button class="insight-tab" data-tab="weather">
+              <i data-lucide="cloud-sun" style="width:14px;height:14px"></i> Weather
+            </button>
           </div>
         </div>
-        <div class="premium-panel__body premium-panel__body--tight" id="timelineList">
-          <div class="premium-empty-state">
-            <div class="premium-empty-state__icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>
-            <p class="premium-empty-state__text">Loading workflow history&hellip;</p>
+        <div class="insight-tabs__body">
+          <div class="insight-pane insight-pane--active" id="pane-demand">
+            <div class="chart-container"><canvas id="salesChart"></canvas></div>
           </div>
+          <div class="insight-pane" id="pane-inventory">
+            <div class="chart-container"><canvas id="stockChart"></canvas></div>
+          </div>
+          <div class="insight-pane" id="pane-weather">
+            <div class="weather-grid" id="weatherGrid">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── WORKFLOW TIMELINE ── -->
+    <section class="page-section">
+      <div class="section-header-v2">
+        <div class="section-header-v2__left">
+          <div class="section-header-v2__icon section-header-v2__icon--neutral"><i data-lucide="activity" style="width:22px;height:22px"></i></div>
+          <h2 class="section-header-v2__title">Workflow Activity</h2>
+        </div>
+      </div>
+      <div id="timelineList">
+        <div class="premium-empty-state">
+          <div class="premium-empty-state__icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>
+          <p class="premium-empty-state__text">Loading workflow history&hellip;</p>
         </div>
       </div>
     </section>
@@ -191,21 +285,28 @@
   </main>
 
   <!-- ===== Chat FAB + Panel ===== -->
-  <button class="chat-fab" id="chatFab" onclick="window.app.toggleChat()" title="Operations Assistant">
-    <i data-lucide="message-circle" style="width:22px;height:22px"></i>
+  <button class="chat-fab" id="chatFab" onclick="window.app.toggleChat()" title="Ask Copilot">
+    <i data-lucide="sparkles" style="width:22px;height:22px"></i>
+    <span class="chat-fab__glow"></span>
   </button>
 
   <aside class="chat-panel" id="chatPanel">
     <div class="chat-panel-header">
       <span class="chat-panel-title">
-        <i data-lucide="bot" style="width:16px;height:16px"></i>
-        Operations Assistant
+        <i data-lucide="sparkles" style="width:16px;height:16px"></i>
+        Copilot Assistant
       </span>
       <button class="chat-panel-close" onclick="window.app.toggleChat()" title="Close">&times;</button>
     </div>
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg chat-msg-agent">
-        <div class="chat-bubble">Hello. I can help you understand branch risk, stock levels, weather impact, and the latest nightly planning run. What would you like to know?</div>
+        <div class="chat-bubble">Hello. I can help you understand branch risk, stock levels, weather impact, and the latest nightly planning run.</div>
+      </div>
+      <div class="chat-prompts" id="chatPrompts">
+        <button class="chat-prompt-pill" onclick="window.app.askPrompt(this)">Why is Brisbane high risk?</button>
+        <button class="chat-prompt-pill" onclick="window.app.askPrompt(this)">Show stores affected by weather</button>
+        <button class="chat-prompt-pill" onclick="window.app.askPrompt(this)">What changed from last night?</button>
+        <button class="chat-prompt-pill" onclick="window.app.askPrompt(this)">Summarize action items</button>
       </div>
     </div>
     <form class="chat-input-bar" id="chatForm" autocomplete="off">
