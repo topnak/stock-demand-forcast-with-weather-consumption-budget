@@ -1556,9 +1556,11 @@ ${summary.summary || 'No summary available.'}`;
         console.warn('Could not load /api/config, using defaults:', e.message);
       }
 
-      // Fallback: read from env.js if server config didn't provide the key
-      const env = window.__ENV__ || {};
-      if (env.AZURE_MAPS_KEY) AZURE_MAPS_KEY = env.AZURE_MAPS_KEY;
+      // Fallback: read from env.js ONLY if server config didn't provide the key
+      if (!AZURE_MAPS_KEY) {
+        const env = window.__ENV__ || {};
+        if (env.AZURE_MAPS_KEY) AZURE_MAPS_KEY = env.AZURE_MAPS_KEY;
+      }
 
       const data = await loadAllData();
       dashboardData = data;
