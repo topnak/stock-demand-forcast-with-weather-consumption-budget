@@ -134,45 +134,43 @@
           </div>
         </div>
 
-        <!-- Medium: Demand Forecast -->
-        <div class="kpi-card-v2 kpi-card-v2--medium">
-          <div class="kpi-card-v2__icon kpi-card-v2__icon--accent"><i data-lucide="trending-up" style="width:20px;height:20px"></i></div>
-          <div class="kpi-card-v2__eyebrow">Demand Forecast</div>
-          <div class="kpi-card-v2__value" data-countup id="kpiTotalPredicted">—</div>
-          <div class="kpi-card-v2__label">units predicted tomorrow</div>
-          <div class="kpi-card-v2__micro" id="kpiDemandMicro"></div>
-        </div>
-
-        <!-- Medium: Weather Impact -->
-        <div class="kpi-card-v2 kpi-card-v2--medium">
-          <div class="kpi-card-v2__icon kpi-card-v2__icon--warning"><i data-lucide="thermometer" style="width:20px;height:20px"></i></div>
-          <div class="kpi-card-v2__eyebrow">Weather Impact</div>
-          <div class="kpi-card-v2__value" data-countup id="kpiAvgTemp">—</div>
-          <div class="kpi-card-v2__label">avg forecast &deg;C</div>
-          <div class="kpi-card-v2__micro" id="kpiWeatherMicro"></div>
-        </div>
-
-        <!-- Compact: Branches -->
+        <!-- Uniform KPI row -->
         <div class="kpi-card-v2 kpi-card-v2--compact">
-          <div class="kpi-card-v2__icon kpi-card-v2__icon--primary"><i data-lucide="store" style="width:16px;height:16px"></i></div>
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--accent"><i data-lucide="trending-up" style="width:18px;height:18px"></i></div>
+          <div>
+            <div class="kpi-card-v2__value kpi-card-v2__value--sm" data-countup id="kpiTotalPredicted">—</div>
+            <div class="kpi-card-v2__label">units predicted</div>
+            <div class="kpi-card-v2__micro" id="kpiDemandMicro"></div>
+          </div>
+        </div>
+
+        <div class="kpi-card-v2 kpi-card-v2--compact">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--warning"><i data-lucide="thermometer" style="width:18px;height:18px"></i></div>
+          <div>
+            <div class="kpi-card-v2__value kpi-card-v2__value--sm" data-countup id="kpiAvgTemp">—</div>
+            <div class="kpi-card-v2__label">avg temp °C</div>
+            <div class="kpi-card-v2__micro" id="kpiWeatherMicro"></div>
+          </div>
+        </div>
+
+        <div class="kpi-card-v2 kpi-card-v2--compact">
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--primary"><i data-lucide="store" style="width:18px;height:18px"></i></div>
           <div>
             <div class="kpi-card-v2__value kpi-card-v2__value--sm" data-countup id="kpiBranches">—</div>
             <div class="kpi-card-v2__label">stores analyzed</div>
           </div>
         </div>
 
-        <!-- Compact: Confidence -->
         <div class="kpi-card-v2 kpi-card-v2--compact">
-          <div class="kpi-card-v2__icon kpi-card-v2__icon--info"><i data-lucide="shield-check" style="width:16px;height:16px"></i></div>
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--info"><i data-lucide="shield-check" style="width:18px;height:18px"></i></div>
           <div>
             <div class="kpi-card-v2__value kpi-card-v2__value--sm" id="kpiConfidence">—</div>
             <div class="kpi-card-v2__label">plan confidence</div>
           </div>
         </div>
 
-        <!-- Compact: Coverage -->
         <div class="kpi-card-v2 kpi-card-v2--compact">
-          <div class="kpi-card-v2__icon kpi-card-v2__icon--success"><i data-lucide="check-circle" style="width:16px;height:16px"></i></div>
+          <div class="kpi-card-v2__icon kpi-card-v2__icon--success"><i data-lucide="check-circle" style="width:18px;height:18px"></i></div>
           <div>
             <div class="kpi-card-v2__value kpi-card-v2__value--sm" id="kpiCoverage">—</div>
             <div class="kpi-card-v2__label">service coverage</div>
