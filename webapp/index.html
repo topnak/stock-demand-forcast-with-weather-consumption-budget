@@ -90,21 +90,46 @@
     <!-- ── KPI CARDS ── -->
     <section class="page-section" id="kpiSection">
       <div class="kpi-grid">
-        <!-- Headline KPI -->
+        <!-- Headline KPI — Enhanced AI Command Card -->
         <div class="kpi-card-v2 kpi-card-v2--headline" id="kpiHeadline">
           <div class="kpi-card-v2__eyebrow">Tonight's AI Plan</div>
-          <div class="kpi-card-v2__hero-row">
-            <span class="kpi-card-v2__big-number" data-countup id="kpiBranchesAction">—</span>
-            <span class="kpi-card-v2__big-label">stores need action</span>
-          </div>
-          <div class="kpi-card-v2__sub-stats">
-            <div class="kpi-card-v2__sub-stat">
-              <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--danger" data-countup id="kpiFlagged">—</span>
-              <span class="kpi-card-v2__sub-label">high-risk</span>
+
+          <div class="headline__body">
+            <!-- Left column: Key stats -->
+            <div class="headline__stats">
+              <div class="headline__big-stat">
+                <span class="kpi-card-v2__big-number" data-countup id="kpiBranchesAction">—</span>
+                <span class="kpi-card-v2__big-label">stores need action</span>
+              </div>
+              <div class="headline__sub-row">
+                <div class="kpi-card-v2__sub-stat">
+                  <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--danger" data-countup id="kpiFlagged">—</span>
+                  <span class="kpi-card-v2__sub-label">high-risk</span>
+                </div>
+                <div class="kpi-card-v2__sub-stat">
+                  <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--accent" data-countup id="kpiReorderQty">—</span>
+                  <span class="kpi-card-v2__sub-label">units to reorder</span>
+                </div>
+              </div>
+              <div class="headline__risk-bar" id="headlineRiskBar"></div>
             </div>
-            <div class="kpi-card-v2__sub-stat">
-              <span class="kpi-card-v2__sub-value kpi-card-v2__sub-value--accent" data-countup id="kpiReorderQty">—</span>
-              <span class="kpi-card-v2__sub-label">units to reorder</span>
+
+            <!-- Right column: AI Insight -->
+            <div class="headline__insight" id="headlineInsight">
+              <div class="headline__insight-header">
+                <i data-lucide="sparkles" style="width:16px;height:16px"></i>
+                <span>AI Insight</span>
+              </div>
+              <p class="headline__insight-text" id="headlineInsightText">Analyzing branch data…</p>
+              <div class="headline__weather-strip" id="headlineWeatherStrip"></div>
+            </div>
+          </div>
+
+          <!-- Bottom: Scrolling news ticker -->
+          <div class="headline__news" id="headlineNews">
+            <div class="headline__news-label"><i data-lucide="newspaper" style="width:14px;height:14px"></i> NEWS</div>
+            <div class="headline__news-track">
+              <div class="headline__news-scroll" id="headlineNewsScroll">Loading headlines…</div>
             </div>
           </div>
         </div>

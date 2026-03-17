@@ -114,6 +114,135 @@
     setText('kpiDemandMicro', demandMicro);
     setText('kpiWeatherMicro', weatherMicro);
     setText('mapBranchCount', branchCount ? branchCount + ' stores' : '');
+
+    // Enhanced headline: AI insight, risk bar, weather chips, news ticker
+    renderHeadlineInsight(data);
+  }
+
+  // ---- Headline AI Insight --------------------------------------------------
+  function renderHeadlineInsight(data) {
+    const forecast = data.forecastoutput || [];
+    const repl     = data.replenishmentoutput || [];
+
+    // Bail if no data
+    if (!forecast.length && !repl.length) return;
+
+    // --- Risk distribution bar ---
+    const riskCounts = { high: 0, medium: 0, low: 0 };
+    repl.forEach(r => {
+      const lvl = (r.risk_level || 'low').toLowerCase();
+      if (lvl === 'high') riskCounts.high++;
+      else if (lvl === 'medium') riskCounts.medium++;
+      else riskCounts.low++;
+    });
+    const total = repl.length || 1;
+    const riskBarEl = document.getElementById('headlineRiskBar');
+    if (riskBarEl) {
+      riskBarEl.innerHTML = [
+        riskCounts.high   ? `<div class="headline__risk-seg headline__risk-seg--high" style="width:${(riskCounts.high / total * 100).toFixed(1)}%"></div>` : '',
+        riskCounts.medium ? `<div class="headline__risk-seg headline__risk-seg--medium" style="width:${(riskCounts.medium / total * 100).toFixed(1)}%"></div>` : '',
+        riskCounts.low    ? `<div class="headline__risk-seg headline__risk-seg--low" style="width:${(riskCounts.low / total * 100).toFixed(1)}%"></div>` : ''
+      ].join('');
+    }
+
+    // --- AI Insight text (deterministic synthesis) ---
+    const insightEl = document.getElementById('headlineInsightText');
+    if (insightEl) {
+      const insight = buildInsightSummary(forecast, repl);
+      insightEl.textContent = insight;
+    }
+
+    // --- Weather chips ---
+    const weatherStripEl = document.getElementById('headlineWeatherStrip');
+    if (weatherStripEl && forecast.length) {
+      const hottest = [...forecast].sort((a, b) => (b.tomorrow_max_temp_c || 0) - (a.tomorrow_max_temp_c || 0))[0];
+      const heatCount = forecast.filter(f => f.tomorrow_max_temp_c > 30).length;
+      const chips = [];
+      if (hottest) {
+        const isHot = hottest.tomorrow_max_temp_c > 30;
+        chips.push(`<span class="headline__weather-chip${isHot ? ' headline__weather-chip--hot' : ''}">${hottest.city} ${hottest.tomorrow_max_temp_c}\u00b0C — ${hottest.weather_condition || ''}</span>`);
+      }
+      if (heatCount > 0) {
+        chips.push(`<span class="headline__weather-chip headline__weather-chip--hot">${heatCount} cit${heatCount > 1 ? 'ies' : 'y'} above 30\u00b0C</span>`);
+      }
+      const avgT = forecast.reduce((s, f) => s + (f.tomorrow_max_temp_c || 0), 0) / forecast.length;
+      chips.push(`<span class="headline__weather-chip">Avg ${avgT.toFixed(1)}\u00b0C across ${forecast.length} stores</span>`);
+      weatherStripEl.innerHTML = chips.join('');
+    }
+
+    // --- News ticker ---
+    const newsScrollEl = document.getElementById('headlineNewsScroll');
+    if (newsScrollEl && forecast.length) {
+      const allNews = [];
+      forecast.forEach(f => {
+        if (f.local_news) {
+          const headlines = f.local_news.split('|').map(h => h.trim()).filter(Boolean);
+          headlines.forEach(h => {
+            if (!allNews.includes(h)) allNews.push(h);
+          });
+        }
+      });
+      if (allNews.length) {
+        const sep = '<span class="headline__news-sep">\u2022</span>';
+        const repeated = allNews.join(sep) + sep + allNews.join(sep);
+        newsScrollEl.innerHTML = repeated;
+        const duration = Math.max(20, allNews.length * 5);
+        newsScrollEl.style.animationDuration = duration + 's';
+      } else {
+        const newsRow = document.getElementById('headlineNews');
+        if (newsRow) newsRow.style.display = 'none';
+      }
+    }
+  }
+
+  function buildInsightSummary(forecast, repl) {
+    const highRisk = repl.filter(r => (r.risk_level || '').toLowerCase() === 'high');
+    const totalQty = repl.reduce((s, r) => s + (r.recommended_order_qty || 0), 0);
+    const totalPredicted = forecast.reduce((s, f) => s + (f.baseline_forecast_units || 0), 0);
+    const totalStock = forecast.reduce((s, f) => s + (f.stock_on_hand || 0) + (f.in_transit || 0), 0);
+    const coveragePct = totalPredicted > 0 ? Math.round((totalStock / totalPredicted) * 100) : 100;
+
+    // Find most critical branch
+    let critical = null;
+    let worstGap = 0;
+    forecast.forEach(f => {
+      const available = (f.stock_on_hand || 0) + (f.in_transit || 0);
+      const gap = (f.baseline_forecast_units || 0) - available;
+      if (gap > worstGap) { worstGap = gap; critical = f; }
+    });
+
+    // Build sentence
+    const parts = [];
+    if (highRisk.length > 0) {
+      const cities = highRisk.map(r => r.city).join(', ');
+      parts.push(`${highRisk.length} high-risk store${highRisk.length > 1 ? 's' : ''} identified: ${cities}.`);
+    } else {
+      parts.push('All stores within safe stock levels.');
+    }
+
+    if (critical) {
+      const avail = (critical.stock_on_hand || 0) + (critical.in_transit || 0);
+      const pct = critical.baseline_forecast_units > 0
+        ? Math.round((avail / critical.baseline_forecast_units) * 100)
+        : 100;
+      parts.push(`${critical.city} is most critical \u2014 stock covers only ${pct}% of forecast demand.`);
+    }
+
+    if (coveragePct < 80) {
+      parts.push(`Network-wide inventory covers ${coveragePct}% of projected demand.`);
+    }
+
+    if (totalQty > 0) {
+      parts.push(`${totalQty} units recommended for reorder tonight.`);
+    }
+
+    // Weather driver
+    const hotCities = forecast.filter(f => f.tomorrow_max_temp_c > 30);
+    if (hotCities.length > 0) {
+      parts.push(`Heatwave conditions driving demand uplift in ${hotCities.length === 1 ? hotCities[0].city : hotCities.length + ' cities'}.`);
+    }
+
+    return parts.join(' ');
   }
 
   // ---- Map rendering --------------------------------------------------------
