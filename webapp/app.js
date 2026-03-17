@@ -257,48 +257,205 @@
     );
 
     const badgeMap = { high: 'danger', medium: 'warning', low: 'success' };
+    const riskIconMap = { high: 'alert-triangle', medium: 'alert-circle', low: 'check-circle' };
+    const confIconMap = { high: 'shield-check', medium: 'shield', low: 'shield-alert' };
 
-    container.innerHTML = '<div class="premium-list">' + sorted.map(r => {
+    container.innerHTML = '<div class="premium-list rec-list-animated">' + sorted.map((r, idx) => {
       const level = (r.risk_level || 'low').toLowerCase();
       const variant = badgeMap[level] || 'neutral';
       const fc = fcMap[r.branch_id] || {};
       const stockOnHand = fc.stock_on_hand ?? '\u2014';
+      const inTransit = fc.in_transit ?? 0;
+      const safetyStock = fc.safety_stock ?? '\u2014';
+      const avg7 = fc.recent_7_day_avg_sales ? fc.recent_7_day_avg_sales.toFixed(1) : '\u2014';
       const predicted = fc.baseline_forecast_units ? Math.round(fc.baseline_forecast_units) : '\u2014';
       const lastSold = latestSales[r.branch_id] ?? '\u2014';
-      const temp = fc.tomorrow_max_temp_c ? fc.tomorrow_max_temp_c + '\u00b0C' : '';
+      const temp = fc.tomorrow_max_temp_c ?? '\u2014';
+      const weather = fc.weather_condition || '';
+      const localNews = fc.local_news || '';
+      const confidence = r.confidence || 'Medium';
+      const confLevel = confidence.toLowerCase();
+      const reorderQty = r.recommended_order_qty ?? 0;
+
+      // Compute stock gap and coverage ratio for visual indicators
+      const available = (typeof stockOnHand === 'number' ? stockOnHand : 0) + inTransit;
+      const forecastNum = fc.baseline_forecast_units ? Math.round(fc.baseline_forecast_units) : 0;
+      const coverageRatio = forecastNum > 0 ? Math.min((available / forecastNum) * 100, 100) : 100;
+      const stockGap = forecastNum > 0 ? forecastNum - available : 0;
+
+      // Weather uplift indicator
+      const tempNum = parseFloat(temp);
+      let upliftLabel = '';
+      let upliftClass = '';
+      if (!isNaN(tempNum)) {
+        if (tempNum > 30) { upliftLabel = '+22% heat uplift'; upliftClass = 'uplift-high'; }
+        else if (tempNum >= 27) { upliftLabel = '+12% warm uplift'; upliftClass = 'uplift-med'; }
+        else { upliftLabel = 'No uplift'; upliftClass = 'uplift-none'; }
+      }
+
+      // News sentiment analysis
+      let newsItems = [];
+      let newsSentiment = 'neutral';
+      let newsIcon = 'newspaper';
+      if (localNews && localNews !== 'No relevant local news') {
+        newsItems = localNews.split(' | ').filter(Boolean).slice(0, 3);
+        const newsLower = localNews.toLowerCase();
+        if (newsLower.includes('heatwave') || newsLower.includes('extreme heat') || newsLower.includes('record') || newsLower.includes('power outage')) {
+          newsSentiment = 'hot';
+          newsIcon = 'flame';
+        } else if (newsLower.includes('cool') || newsLower.includes('rain') || newsLower.includes('cold') || newsLower.includes('storm')) {
+          newsSentiment = 'cool';
+          newsIcon = 'cloud-rain';
+        }
+      }
+      const newsSentimentLabel = { hot: 'Demand Signal', cool: 'Low Signal', neutral: 'Neutral' }[newsSentiment];
+      const newsSentimentVariant = { hot: 'danger', cool: 'info', neutral: 'neutral' }[newsSentiment];
+
+      const weatherIconName = weather.toLowerCase().includes('sun') || weather.toLowerCase().includes('clear') ? 'sun' :
+        weather.toLowerCase().includes('cloud') ? 'cloud' :
+        weather.toLowerCase().includes('rain') ? 'cloud-rain' :
+        weather.toLowerCase().includes('storm') ? 'cloud-lightning' : 'thermometer';
 
       return `
-        <div class="rec-item">
-          <div class="rec-item__content">
-            <div class="rec-header">
-              <div>
-                <div class="rec-branch">${sanitize(r.branch_name)}</div>
-                <div class="rec-city">${sanitize(r.city)}${temp ? ' \u00b7 ' + sanitize(temp) : ''}</div>
-              </div>
-              <span class="premium-badge premium-badge--${variant}">${sanitize(r.risk_level)}</span>
-            </div>
-            <div class="rec-metrics rec-metrics--4">
-              <div class="rec-metric">
-                <div class="rec-metric-value">${stockOnHand}</div>
-                <div class="rec-metric-label">On Hand</div>
-              </div>
-              <div class="rec-metric">
-                <div class="rec-metric-value">${lastSold}</div>
-                <div class="rec-metric-label">Last Day Sold</div>
-              </div>
-              <div class="rec-metric">
-                <div class="rec-metric-value">${predicted}</div>
-                <div class="rec-metric-label">Predicted</div>
-              </div>
-              <div class="rec-metric rec-metric--highlight">
-                <div class="rec-metric-value">${r.recommended_order_qty ?? 0}</div>
-                <div class="rec-metric-label">Reorder Qty</div>
+        <div class="rec-card rec-card--${variant}" style="--anim-delay: ${idx * 0.08}s">
+          <!-- Top stripe -->
+          <div class="rec-card__stripe rec-card__stripe--${variant}"></div>
+
+          <!-- Header row -->
+          <div class="rec-card__header">
+            <div class="rec-card__title-group">
+              <div class="rec-card__branch">${sanitize(r.branch_name)}</div>
+              <div class="rec-card__location">
+                <i data-lucide="map-pin" style="width:12px;height:12px"></i>
+                ${sanitize(r.city)}
               </div>
             </div>
-            ${r.explanation ? `<div class="rec-explanation">${sanitize(r.explanation)}</div>` : ''}
+            <div class="rec-card__badges">
+              <span class="premium-badge premium-badge--${variant}">
+                <i data-lucide="${riskIconMap[level]}" style="width:13px;height:13px"></i>
+                ${sanitize(r.risk_level)} Risk
+              </span>
+              <span class="premium-badge premium-badge--neutral rec-card__conf-badge">
+                <i data-lucide="${confIconMap[confLevel]}" style="width:13px;height:13px"></i>
+                ${sanitize(confidence)}
+              </span>
+            </div>
           </div>
+
+          <!-- Weather & Temperature row -->
+          <div class="rec-card__weather-strip">
+            <div class="rec-card__weather-main">
+              <i data-lucide="${weatherIconName}" style="width:18px;height:18px"></i>
+              <span class="rec-card__temp">${temp}\u00b0C</span>
+              <span class="rec-card__weather-desc">${sanitize(weather)}</span>
+            </div>
+            ${upliftLabel ? `<span class="rec-card__uplift rec-card__uplift--${upliftClass}">${upliftLabel}</span>` : ''}
+          </div>
+
+          <!-- Key metrics grid -->
+          <div class="rec-card__metrics">
+            <div class="rec-card__metric">
+              <div class="rec-card__metric-icon"><i data-lucide="package" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${stockOnHand}</span>
+                <span class="rec-card__metric-label">On Hand</span>
+              </div>
+            </div>
+            <div class="rec-card__metric">
+              <div class="rec-card__metric-icon"><i data-lucide="truck" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${inTransit}</span>
+                <span class="rec-card__metric-label">In Transit</span>
+              </div>
+            </div>
+            <div class="rec-card__metric">
+              <div class="rec-card__metric-icon"><i data-lucide="shield" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${safetyStock}</span>
+                <span class="rec-card__metric-label">Safety Stock</span>
+              </div>
+            </div>
+            <div class="rec-card__metric">
+              <div class="rec-card__metric-icon"><i data-lucide="shopping-cart" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${lastSold}</span>
+                <span class="rec-card__metric-label">Last Day Sold</span>
+              </div>
+            </div>
+            <div class="rec-card__metric">
+              <div class="rec-card__metric-icon"><i data-lucide="trending-up" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${avg7}</span>
+                <span class="rec-card__metric-label">7-Day Avg</span>
+              </div>
+            </div>
+            <div class="rec-card__metric rec-card__metric--accent">
+              <div class="rec-card__metric-icon"><i data-lucide="target" style="width:16px;height:16px"></i></div>
+              <div class="rec-card__metric-data">
+                <span class="rec-card__metric-value">${predicted}</span>
+                <span class="rec-card__metric-label">Predicted</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock coverage bar -->
+          <div class="rec-card__coverage">
+            <div class="rec-card__coverage-header">
+              <span class="rec-card__coverage-label">Stock Coverage</span>
+              <span class="rec-card__coverage-value">${Math.round(coverageRatio)}%</span>
+            </div>
+            <div class="rec-card__coverage-track">
+              <div class="rec-card__coverage-fill rec-card__coverage-fill--${variant}" style="--fill-width: ${coverageRatio}%"></div>
+            </div>
+            ${stockGap > 0 ? `<span class="rec-card__coverage-gap">Gap: ${stockGap} units short</span>` : `<span class="rec-card__coverage-ok">Stock covers forecast</span>`}
+          </div>
+
+          <!-- Reorder decision -->
+          ${reorderQty > 0 ? `
+          <div class="rec-card__reorder">
+            <div class="rec-card__reorder-qty">
+              <i data-lucide="package-plus" style="width:20px;height:20px"></i>
+              <span class="rec-card__reorder-number">${reorderQty}</span>
+              <span class="rec-card__reorder-unit">units</span>
+            </div>
+            <span class="rec-card__reorder-label">Recommended Reorder</span>
+          </div>` : `
+          <div class="rec-card__reorder rec-card__reorder--none">
+            <div class="rec-card__reorder-qty">
+              <i data-lucide="check-circle" style="width:20px;height:20px"></i>
+              <span class="rec-card__reorder-number">0</span>
+              <span class="rec-card__reorder-unit">units</span>
+            </div>
+            <span class="rec-card__reorder-label">No reorder needed</span>
+          </div>`}
+
+          <!-- News sentiment section -->
+          ${newsItems.length ? `
+          <div class="rec-card__news">
+            <div class="rec-card__news-header">
+              <i data-lucide="${newsIcon}" style="width:14px;height:14px"></i>
+              <span>Local News</span>
+              <span class="premium-badge premium-badge--${newsSentimentVariant}" style="font-size:10px;min-height:22px;padding:0 8px;">${newsSentimentLabel}</span>
+            </div>
+            <ul class="rec-card__news-list">
+              ${newsItems.map(n => `<li>${sanitize(n)}</li>`).join('')}
+            </ul>
+          </div>` : ''}
+
+          <!-- AI Explanation -->
+          ${r.explanation ? `
+          <div class="rec-card__explanation">
+            <div class="rec-card__explanation-header">
+              <i data-lucide="brain" style="width:14px;height:14px"></i>
+              AI Analysis
+            </div>
+            <p class="rec-card__explanation-text">${sanitize(r.explanation)}</p>
+          </div>` : ''}
         </div>`;
     }).join('') + '</div>';
+
+    // Re-initialize Lucide icons for newly injected SVGs
+    if (window.lucide) window.lucide.createIcons();
   }
 
   // ---- Sales chart (daily time-series from sales_recent.json) ---------------

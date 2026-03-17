@@ -30,6 +30,9 @@
   --color-bg-card-solid: #ffffff;
   --color-bg-glass: rgba(255, 255, 255, 0.76);
   --color-bg-muted: #f4f7f5;
+  --color-bg-elevated: #ffffff;
+  --color-bg-soft: #f8faf8;
+  --color-bg-subtle: #eef1ef;
 
   --color-text-primary: #1a1a1a;
   --color-text-secondary: #5c6a60;
