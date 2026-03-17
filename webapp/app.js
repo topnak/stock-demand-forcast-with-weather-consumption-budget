@@ -892,6 +892,128 @@
     };
   }
 
+  // ---- Pipeline animation ----------------------------------------------------
+  const PIPELINE_ICONS = {
+    get_branches:           'database',
+    get_sales_recent:       'shopping-cart',
+    get_inventory:          'package',
+    azure_maps_weather:     'cloud-sun',
+    compose_predicted_units:'calculator',
+    autonomous_agent:       'brain',
+    create_blobs:           'hard-drive'
+  };
+
+  function renderPipeline(data) {
+    const steps = data.workflowsteps || [];
+    const runs  = data.workflowruns || [];
+    const track = document.getElementById('pipelineTrack');
+    if (!track) return;
+
+    // Get the latest run's steps
+    const latestRun = runs.length
+      ? [...runs].sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0))[0]
+      : null;
+
+    let runSteps = [];
+    if (latestRun) {
+      runSteps = steps.filter(s => s.run_id === latestRun.run_id);
+    }
+    // If no matching steps, use the first run's steps from workflow_steps
+    if (!runSteps.length && steps.length) {
+      const firstRunId = steps[0].run_id;
+      runSteps = steps.filter(s => s.run_id === firstRunId);
+    }
+    if (!runSteps.length) {
+      // Fallback: define the standard pipeline phases
+      runSteps = [
+        { step_name: 'Load Data',       action: 'get_branches',           status: 'Succeeded' },
+        { step_name: 'Load Sales',      action: 'get_sales_recent',       status: 'Succeeded' },
+        { step_name: 'Load Inventory',  action: 'get_inventory',          status: 'Succeeded' },
+        { step_name: 'Weather',         action: 'azure_maps_weather',     status: 'Succeeded' },
+        { step_name: 'Demand Calc',     action: 'compose_predicted_units',status: 'Succeeded' },
+        { step_name: 'AI Agent',        action: 'autonomous_agent',       status: 'Succeeded' },
+        { step_name: 'Write Output',    action: 'create_blobs',           status: 'Succeeded' }
+      ];
+    }
+
+    // Sort by started_at
+    runSteps.sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0));
+
+    track.innerHTML = runSteps.map((step, i) => {
+      const icon = PIPELINE_ICONS[step.action] || 'circle';
+      const isLast = i === runSteps.length - 1;
+      return `
+        <div class="pipeline__step" data-index="${i}">
+          <div class="pipeline__node pipeline__node--pending">
+            <i data-lucide="${icon}" style="width:18px;height:18px"></i>
+          </div>
+          <div class="pipeline__label">${sanitize(step.step_name)}</div>
+          <div class="pipeline__status-text" data-step-status></div>
+        </div>
+        ${!isLast ? '<div class="pipeline__connector" data-index="' + i + '"><div class="pipeline__connector-fill"></div></div>' : ''}`;
+    }).join('');
+
+    // Re-init lucide icons for the pipeline
+    if (window.lucide) window.lucide.createIcons();
+
+    // Animate after a short delay
+    animatePipeline(runSteps);
+
+    // Replay button
+    const replayBtn = document.getElementById('pipelineReplayBtn');
+    if (replayBtn) {
+      replayBtn.onclick = function () {
+        // Reset all nodes
+        track.querySelectorAll('.pipeline__node').forEach(n => {
+          n.className = 'pipeline__node pipeline__node--pending';
+        });
+        track.querySelectorAll('.pipeline__connector-fill').forEach(f => {
+          f.style.width = '0%';
+        });
+        track.querySelectorAll('[data-step-status]').forEach(s => {
+          s.textContent = '';
+          s.className = '';
+        });
+        setTimeout(() => animatePipeline(runSteps), 300);
+      };
+    }
+  }
+
+  function animatePipeline(steps) {
+    const STEP_DELAY = 600;  // ms between each step starting
+    const RUN_DURATION = 400; // ms a step shows "running" before completing
+
+    steps.forEach((step, i) => {
+      const nodeEl = document.querySelector(`.pipeline__step[data-index="${i}"] .pipeline__node`);
+      const statusEl = document.querySelector(`.pipeline__step[data-index="${i}"] [data-step-status]`);
+      const connFill = document.querySelector(`.pipeline__connector[data-index="${i}"] .pipeline__connector-fill`);
+      if (!nodeEl) return;
+
+      const startTime = i * STEP_DELAY;
+      const ok = (step.status || '').toLowerCase() === 'succeeded';
+
+      // Phase 1: start running
+      setTimeout(() => {
+        nodeEl.className = 'pipeline__node pipeline__node--running';
+        if (statusEl) { statusEl.textContent = 'Running…'; statusEl.className = 'pipeline__status-text pipeline__status-text--running'; }
+      }, startTime);
+
+      // Phase 2: complete
+      setTimeout(() => {
+        nodeEl.className = ok ? 'pipeline__node pipeline__node--success' : 'pipeline__node pipeline__node--failed';
+        if (statusEl) {
+          statusEl.textContent = ok ? 'Done' : 'Failed';
+          statusEl.className = ok ? 'pipeline__status-text pipeline__status-text--success' : 'pipeline__status-text pipeline__status-text--failed';
+        }
+        // Animate connector fill
+        if (connFill) {
+          connFill.style.transition = `width ${STEP_DELAY * 0.6}ms var(--ease-out)`;
+          connFill.style.width = '100%';
+        }
+      }, startTime + RUN_DURATION);
+    });
+  }
+
   // ---- Workflow activity log --------------------------------------------------
   function renderTimeline(data) {
     const runs  = data.workflowruns || [];
@@ -1450,6 +1572,7 @@ ${summary.summary || 'No summary available.'}`;
       renderStockChart(data);
       renderWeatherGrid(data);
       renderTimeline(data);
+      renderPipeline(data);
     } catch (err) {
       console.error('Dashboard init error:', err);
     }
