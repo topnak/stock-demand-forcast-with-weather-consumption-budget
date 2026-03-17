@@ -954,8 +954,8 @@ body {
 /* Reorder decision block */
 .rec-card__reorder {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-3);
   margin: var(--space-4) var(--space-6) 0;
   padding: var(--space-4);
   border-radius: var(--radius-sm);
@@ -965,6 +965,11 @@ body {
 .rec-card__reorder--none {
   background: var(--color-bg-soft);
   border-color: var(--color-border-subtle);
+}
+.rec-card__reorder-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .rec-card__reorder-qty {
   display: flex;
@@ -990,6 +995,21 @@ body {
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
   font-weight: var(--font-medium);
+}
+.rec-card__reorder-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--text-xs);
+  line-height: var(--line-relaxed);
+  color: var(--color-brand-dark);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(0, 132, 61, 0.1);
+}
+.rec-card__reorder--none .rec-card__reorder-reason {
+  color: var(--color-text-secondary);
+  border-top-color: var(--color-border-subtle);
 }
 
 /* News section */

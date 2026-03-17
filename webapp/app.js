@@ -583,20 +583,26 @@
           <!-- Reorder decision -->
           ${reorderQty > 0 ? `
           <div class="rec-card__reorder">
-            <div class="rec-card__reorder-qty">
-              <i data-lucide="package-plus" style="width:20px;height:20px"></i>
-              <span class="rec-card__reorder-number">${reorderQty}</span>
-              <span class="rec-card__reorder-unit">units</span>
+            <div class="rec-card__reorder-top">
+              <div class="rec-card__reorder-qty">
+                <i data-lucide="package-plus" style="width:20px;height:20px"></i>
+                <span class="rec-card__reorder-number">${reorderQty}</span>
+                <span class="rec-card__reorder-unit">units</span>
+              </div>
+              <span class="rec-card__reorder-label">Recommended Reorder</span>
             </div>
-            <span class="rec-card__reorder-label">Recommended Reorder</span>
+            ${r.explanation ? `<p class="rec-card__reorder-reason"><i data-lucide="sparkles" style="width:12px;height:12px;flex-shrink:0"></i> ${sanitize(r.explanation)}</p>` : ''}
           </div>` : `
           <div class="rec-card__reorder rec-card__reorder--none">
-            <div class="rec-card__reorder-qty">
-              <i data-lucide="check-circle" style="width:20px;height:20px"></i>
-              <span class="rec-card__reorder-number">0</span>
-              <span class="rec-card__reorder-unit">units</span>
+            <div class="rec-card__reorder-top">
+              <div class="rec-card__reorder-qty">
+                <i data-lucide="check-circle" style="width:20px;height:20px"></i>
+                <span class="rec-card__reorder-number">0</span>
+                <span class="rec-card__reorder-unit">units</span>
+              </div>
+              <span class="rec-card__reorder-label">No reorder needed</span>
             </div>
-            <span class="rec-card__reorder-label">No reorder needed</span>
+            ${r.explanation ? `<p class="rec-card__reorder-reason"><i data-lucide="sparkles" style="width:12px;height:12px;flex-shrink:0"></i> ${sanitize(r.explanation)}</p>` : ''}
           </div>`}
 
           <!-- News sentiment section -->
@@ -610,16 +616,6 @@
             <ul class="rec-card__news-list">
               ${newsItems.map(n => `<li>${sanitize(n)}</li>`).join('')}
             </ul>
-          </div>` : ''}
-
-          <!-- AI Explanation -->
-          ${r.explanation ? `
-          <div class="rec-card__explanation">
-            <div class="rec-card__explanation-header">
-              <i data-lucide="brain" style="width:14px;height:14px"></i>
-              AI Analysis
-            </div>
-            <p class="rec-card__explanation-text">${sanitize(r.explanation)}</p>
           </div>` : ''}
         </div>`;
     });
