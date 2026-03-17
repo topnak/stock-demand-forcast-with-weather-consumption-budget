@@ -45,14 +45,39 @@
       "type": "string",
       "defaultValue": "gpt-4o",
       "metadata": { "description": "Azure OpenAI deployment name." }
+    },
+    "emailRecipient": {
+      "type": "string",
+      "defaultValue": "ponnak2000@yahoo.com",
+      "metadata": { "description": "Email recipient for nightly stock report." }
+    },
+    "outlookConnectionName": {
+      "type": "string",
+      "defaultValue": "outlook-wesonlinephnak",
+      "metadata": { "description": "Name of the Outlook.com API connection." }
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('outlookConnectionName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "api": {
+          "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'outlook')]"
+        },
+        "displayName": "WesOnline Nightly Report"
+      }
+    },
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2019-05-01",
       "name": "[parameters('logicAppName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('outlookConnectionName'))]"
+      ],
       "identity": {
         "type": "SystemAssigned"
       },
@@ -68,7 +93,9 @@
             "azureMapsKey": { "type": "securestring" },
             "openaiEndpoint": { "type": "string" },
             "openaiApiKey": { "type": "securestring" },
-            "openaiDeployment": { "type": "string" }
+            "openaiDeployment": { "type": "string" },
+            "emailRecipient": { "type": "string" },
+            "$connections": { "type": "Object", "defaultValue": {} }
           },
           "triggers": {
             "Recurrence_03AM_Sydney": {
@@ -340,6 +367,32 @@
                   }
                 },
 
+                "HTTP_Search_News": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "https://www.bing.com/news/search",
+                    "queries": {
+                      "q": "@{concat(items('For_each_branch')['city'], ' weather heatwave Australia')}",
+                      "format": "rss"
+                    },
+                    "headers": {
+                      "Accept": "application/xml"
+                    }
+                  },
+                  "runAfter": {},
+                  "description": "Fetch local news from Bing News RSS feed (free, no API key) for the branch city."
+                },
+
+                "compose_news_summary": {
+                  "type": "Compose",
+                  "inputs": "@{if(equals(actions('HTTP_Search_News')['status'], 'Succeeded'), if(greater(length(xpath(xml(body('HTTP_Search_News')), '//item/title/text()')), 0), join(take(xpath(xml(body('HTTP_Search_News')), '//item/title/text()'), 3), ' | '), 'No relevant local news'), 'No relevant local news')}",
+                  "runAfter": {
+                    "HTTP_Search_News": [ "Succeeded", "Failed" ]
+                  },
+                  "description": "Extract top 3 news headlines from RSS XML, or fallback to default text."
+                },
+
                 "Append_to_branchInputs": {
                   "type": "AppendToArrayVariable",
                   "inputs": {
@@ -356,7 +409,8 @@
                       "recent_7_day_avg_sales": "@outputs('Compose_avg7_value')",
                       "tomorrow_max_temp_c": "@outputs('compose_maxTemp')",
                       "weather_condition": "@outputs('compose_weather_condition')",
-                      "baseline_forecast_units": "@outputs('Compose_predicted_units')"
+                      "baseline_forecast_units": "@outputs('Compose_predicted_units')",
+                      "local_news": "@outputs('compose_news_summary')"
                     }
                   },
                   "runAfter": {
@@ -364,7 +418,8 @@
                     "Compose_in_transit": [ "Succeeded" ],
                     "Compose_safety_stock": [ "Succeeded" ],
                     "Compose_predicted_units": [ "Succeeded" ],
-                    "compose_weather_condition": [ "Succeeded" ]
+                    "compose_weather_condition": [ "Succeeded" ],
+                    "compose_news_summary": [ "Succeeded" ]
                   }
                 }
               },
@@ -401,7 +456,7 @@
                   "messages": [
                     {
                       "role": "system",
-                      "content": "You are a replenishment planning agent for WesOnline, an Australian electronics retailer operating 6 stores across major cities. The primary product is the Pedestal Electric Fan 40cm (SKU: EF001). Demand for electric fans is strongly driven by temperature — hotter days mean significantly more sales.\n\n## YOUR ROLE\nEvery night at 03:00 AM AEST, you evaluate each branch's stock position and determine whether a reorder is required for the next trading day.\n\n## INPUT FORMAT\nYou receive a JSON array called branchInputs. Each object contains:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- stock_on_hand (integer) — current physical stock in units\n- in_transit (integer) — stock already ordered and en route\n- safety_stock (integer) — minimum buffer that should be maintained\n- recent_7_day_avg_sales (number) — average daily units sold over last 7 days\n- tomorrow_max_temp_c (number) — forecasted maximum temperature in Celsius\n- weather_condition (string) — e.g. \"Sunny\", \"Partly Cloudy\"\n- baseline_forecast_units (number) — deterministic demand prediction (already includes weather uplift)\n\n## DECISION LOGIC\nFor each branch, calculate:\n1. available_stock = stock_on_hand + in_transit\n2. stock_gap = baseline_forecast_units - available_stock\n3. safety_buffer = available_stock - safety_stock\n\nRisk classification:\n- HIGH: stock_gap > 0 AND safety_buffer < 20\n- MEDIUM: stock_gap > 0 BUT safety_buffer >= 20, OR stock_gap <= 0 BUT safety_buffer < 10\n- LOW: available_stock comfortably covers baseline_forecast_units with adequate safety buffer\n\nReorder decision:\n- If risk is HIGH: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 20\n- If risk is MEDIUM: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 10\n- If risk is LOW: reorder_needed = false, recommended_order_qty = 0\n\n## RULES\n- Be CONSERVATIVE. Do not over-order.\n- ALWAYS use the provided baseline_forecast_units. Never invent your own demand estimate.\n- Order quantities MUST be multiples of 10.\n- Mention the temperature and its impact on fan demand in the explanation.\n- Mention stock_on_hand vs predicted demand in the explanation.\n- Keep explanations to 1-2 sentences.\n\n## OUTPUT FORMAT\nReturn ONLY a valid JSON array. No markdown fences, no commentary outside the array.\n\nEach element must contain exactly these fields:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- risk_level (\"High\", \"Medium\", or \"Low\")\n- reorder_needed (boolean)\n- recommended_order_qty (integer, multiples of 10, 0 if not needed)\n- confidence (\"High\", \"Medium\", or \"Low\")\n- explanation (string — 1-2 sentence justification mentioning temperature and stock position)"
+                      "content": "You are a replenishment planning agent for WesOnline, an Australian electronics retailer operating 6 stores across major cities. The primary product is the Pedestal Electric Fan 40cm (SKU: EF001). Demand for electric fans is strongly driven by temperature — hotter days mean significantly more sales.\n\n## YOUR ROLE\nEvery night at 03:00 AM AEST, you evaluate each branch's stock position and determine whether a reorder is required for the next trading day.\n\n## INPUT FORMAT\nYou receive a JSON array called branchInputs. Each object contains:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- stock_on_hand (integer) — current physical stock in units\n- in_transit (integer) — stock already ordered and en route\n- safety_stock (integer) — minimum buffer that should be maintained\n- recent_7_day_avg_sales (number) — average daily units sold over last 7 days\n- tomorrow_max_temp_c (number) — forecasted maximum temperature in Celsius\n- weather_condition (string) — e.g. \"Sunny\", \"Partly Cloudy\"\n- baseline_forecast_units (number) — deterministic demand prediction (already includes weather uplift)\n- local_news (string) — recent local news headlines for this city, separated by ' | '. May say 'No relevant local news' if nothing found.\n\n## DECISION LOGIC\nFor each branch, calculate:\n1. available_stock = stock_on_hand + in_transit\n2. stock_gap = baseline_forecast_units - available_stock\n3. safety_buffer = available_stock - safety_stock\n\nRisk classification:\n- HIGH: stock_gap > 0 AND safety_buffer < 20\n- MEDIUM: stock_gap > 0 BUT safety_buffer >= 20, OR stock_gap <= 0 BUT safety_buffer < 10\n- LOW: available_stock comfortably covers baseline_forecast_units with adequate safety buffer\n\nReorder decision:\n- If risk is HIGH: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 20\n- If risk is MEDIUM: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 10\n- If risk is LOW: reorder_needed = false, recommended_order_qty = 0\n\n## NEWS CONTEXT\nUse the local_news field as supplementary intelligence. If news headlines mention heatwaves, extreme heat, power outages, or events that could spike fan demand, consider raising your risk assessment or increasing recommended order quantities. If the news is irrelevant (e.g. unrelated topics) or says 'No relevant local news', do not adjust your assessment — rely solely on the quantitative data.\n\n## RULES\n- Be CONSERVATIVE. Do not over-order.\n- ALWAYS use the provided baseline_forecast_units. Never invent your own demand estimate.\n- Order quantities MUST be multiples of 10.\n- Mention the temperature and its impact on fan demand in the explanation.\n- Mention stock_on_hand vs predicted demand in the explanation.\n- If local news is relevant to demand, briefly mention it in the explanation.\n- Keep explanations to 2-3 sentences.\n\n## OUTPUT FORMAT\nReturn ONLY a valid JSON array. No markdown fences, no commentary outside the array.\n\nEach element must contain exactly these fields:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- risk_level (\"High\", \"Medium\", or \"Low\")\n- reorder_needed (boolean)\n- recommended_order_qty (integer, multiples of 10, 0 if not needed)\n- confidence (\"High\", \"Medium\", or \"Low\")\n- explanation (string — 2-3 sentence justification mentioning temperature, stock position, and relevant news if applicable)"
                     },
                     {
                       "role": "user",
@@ -421,7 +476,7 @@
             "Parse_agent_response": {
               "type": "ParseJson",
               "inputs": {
-                "content": "@json(trim(body('Agent_Replenishment_Planner')['choices'][0]['message']['content']))",
+                "content": "@json(trim(replace(replace(body('Agent_Replenishment_Planner')['choices'][0]['message']['content'], '```json', ''), '```', '')))",
                 "schema": {
                   "type": "array",
                   "items": {
@@ -593,6 +648,62 @@
               "runAfter": {
                 "Compose_updated_runs": [ "Succeeded" ]
               }
+            },
+
+            "Create_Recommendations_Table": {
+              "type": "Table",
+              "inputs": {
+                "from": "@body('Parse_agent_response')",
+                "format": "HTML",
+                "columns": [
+                  { "header": "Branch", "value": "@item()['branch_name']" },
+                  { "header": "City", "value": "@item()['city']" },
+                  { "header": "Risk", "value": "@item()['risk_level']" },
+                  { "header": "Reorder", "value": "@if(item()['reorder_needed'], 'Yes', 'No')" },
+                  { "header": "Qty", "value": "@item()['recommended_order_qty']" },
+                  { "header": "Confidence", "value": "@item()['confidence']" },
+                  { "header": "Explanation", "value": "@item()['explanation']" }
+                ]
+              },
+              "runAfter": {
+                "Parse_agent_response": [ "Succeeded" ]
+              }
+            },
+
+            "Compose_HTML_Email": {
+              "type": "Compose",
+              "inputs": "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body style='margin:0;padding:0;font-family:Segoe UI,Helvetica,Arial,sans-serif;background:#f4f5f7'><div style='max-width:800px;margin:0 auto;background:#ffffff'><div style='background:#0f2b46;padding:24px 32px'><h1 style='color:#ffffff;margin:0;font-size:22px;font-weight:600'>WesOnline — Nightly Stock Planner Report</h1><p style='color:#8bb8e0;margin:6px 0 0;font-size:13px'>Automated demand forecast and replenishment recommendations</p></div><div style='padding:24px 32px'><table style='width:100%;border-collapse:collapse;margin-bottom:20px'><tr><td style='padding:8px 0;color:#666;font-size:13px;width:140px'>Run ID</td><td style='padding:8px 0;font-size:13px;font-weight:600'>@{variables('runId')}</td></tr><tr><td style='padding:8px 0;color:#666;font-size:13px'>Generated</td><td style='padding:8px 0;font-size:13px'>@{formatDateTime(utcNow(), 'dd MMM yyyy HH:mm')} UTC</td></tr><tr><td style='padding:8px 0;color:#666;font-size:13px'>Branches evaluated</td><td style='padding:8px 0;font-size:13px;font-weight:600'>@{length(variables('branchInputs'))}</td></tr></table><h2 style='color:#0f2b46;font-size:16px;margin:24px 0 12px;border-bottom:2px solid #e8eaed;padding-bottom:8px'>Replenishment Recommendations</h2><style>table.reco{width:100%;border-collapse:collapse;font-size:13px}table.reco th{background:#f0f2f5;padding:10px 12px;text-align:left;font-weight:600;color:#333;border-bottom:2px solid #dde0e4}table.reco td{padding:10px 12px;border-bottom:1px solid #eee;color:#444}</style>@{body('Create_Recommendations_Table')}<h2 style='color:#0f2b46;font-size:16px;margin:28px 0 12px;border-bottom:2px solid #e8eaed;padding-bottom:8px'>Forecast Inputs</h2><table style='width:100%;border-collapse:collapse;font-size:12px'><tr style='background:#f0f2f5'><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>Branch</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>Temp</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>Weather</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>Stock</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>In Transit</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>Forecast</th><th style='padding:8px;text-align:left;border-bottom:2px solid #dde0e4'>News</th></tr></table><p style='color:#888;font-size:11px;margin-top:8px'>Full forecast input data is available in forecast_output.json in Azure Blob Storage.</p></div><div style='background:#f0f2f5;padding:16px 32px;text-align:center'><p style='color:#888;font-size:11px;margin:0'>WesOnline Nightly Stock Planner — Powered by Azure AI</p></div></div></body></html>",
+              "runAfter": {
+                "Create_Recommendations_Table": [ "Succeeded" ],
+                "Write_forecast_output": [ "Succeeded" ],
+                "Write_replenishment_output": [ "Succeeded" ],
+                "Write_operator_summary": [ "Succeeded" ],
+                "Write_workflow_runs": [ "Succeeded" ]
+              },
+              "description": "Premium branded HTML email with run metadata, recommendations table, and forecast summary."
+            },
+
+            "Send_Email_Report": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['outlook']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/v2/Mail",
+                "body": {
+                  "To": "@{parameters('emailRecipient')}",
+                  "Subject": "WesOnline Stock Report — @{formatDateTime(utcNow(), 'dd MMM yyyy')}",
+                  "Body": "@{outputs('Compose_HTML_Email')}",
+                  "IsHtml": true
+                }
+              },
+              "runAfter": {
+                "Compose_HTML_Email": [ "Succeeded" ]
+              },
+              "description": "Send premium HTML email report via Outlook.com connector."
             }
           },
           "outputs": {}
@@ -604,7 +715,17 @@
           "azureMapsKey": { "value": "[parameters('azureMapsKey')]" },
           "openaiEndpoint": { "value": "[parameters('openaiEndpoint')]" },
           "openaiApiKey": { "value": "[parameters('openaiApiKey')]" },
-          "openaiDeployment": { "value": "[parameters('openaiDeployment')]" }
+          "openaiDeployment": { "value": "[parameters('openaiDeployment')]" },
+          "emailRecipient": { "value": "[parameters('emailRecipient')]" },
+          "$connections": {
+            "value": {
+              "outlook": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('outlookConnectionName'))]",
+                "connectionName": "[parameters('outlookConnectionName')]",
+                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'outlook')]"
+              }
+            }
+          }
         }
       }
     }
