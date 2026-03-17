@@ -132,23 +132,38 @@
 
     if (!branches.length) return;
 
+    const mapContainer = document.getElementById('azureMap');
     if (!AZURE_MAPS_KEY) {
       renderFallbackMap(branches, riskMap);
       return;
     }
 
-    if (!mapInstance) {
-      mapInstance = new atlas.Map('azureMap', {
-        center: [134.0, -28.0],
-        zoom: 3.4,
-        language: 'en-AU',
-        authOptions: {
-          authType: 'subscriptionKey',
-          subscriptionKey: AZURE_MAPS_KEY
-        }
-      });
+    // Ensure the map container has a minimum height for the SDK
+    if (mapContainer) mapContainer.style.minHeight = '360px';
 
-      mapInstance.events.add('ready', () => addMapPins(mapInstance, branches, riskMap, forecastMap));
+    if (!mapInstance) {
+      try {
+        mapInstance = new atlas.Map('azureMap', {
+          center: [134.0, -28.0],
+          zoom: 3.4,
+          style: 'road',
+          language: 'en-AU',
+          authOptions: {
+            authType: 'subscriptionKey',
+            subscriptionKey: AZURE_MAPS_KEY
+          }
+        });
+
+        mapInstance.events.add('ready', () => addMapPins(mapInstance, branches, riskMap, forecastMap));
+        mapInstance.events.add('error', (e) => {
+          console.warn('Azure Maps error, falling back:', e.error);
+          mapInstance = null;
+          renderFallbackMap(branches, riskMap);
+        });
+      } catch (e) {
+        console.warn('Azure Maps init failed:', e);
+        renderFallbackMap(branches, riskMap);
+      }
     } else {
       addMapPins(mapInstance, branches, riskMap, forecastMap);
     }
@@ -1296,7 +1311,7 @@ ${summary.summary || 'No summary available.'}`;
 
       // Fallback: read from env.js if server config didn't provide the key
       const env = window.__ENV__ || {};
-      if (!AZURE_MAPS_KEY && env.AZURE_MAPS_KEY) AZURE_MAPS_KEY = env.AZURE_MAPS_KEY;
+      if (env.AZURE_MAPS_KEY) AZURE_MAPS_KEY = env.AZURE_MAPS_KEY;
 
       const data = await loadAllData();
       dashboardData = data;

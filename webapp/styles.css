@@ -557,21 +557,20 @@ body {
 }
 .rec-carousel__viewport {
   position: relative;
-  min-height: 520px;
   overflow: hidden;
 }
+}
 .rec-carousel__card {
-  position: absolute;
-  inset: 0;
+  /* Hidden cards are absolute-positioned; active card is relative to set height */
   transition: none;
 }
-.rec-carousel__card.is-active { z-index: 2; opacity: 1; }
-.rec-carousel__card.is-hidden { opacity: 0; pointer-events: none; z-index: 1; }
+.rec-carousel__card.is-active { position: relative; z-index: 2; opacity: 1; }
+.rec-carousel__card.is-hidden { position: absolute; inset: 0; opacity: 0; pointer-events: none; z-index: 1; }
 
-.rec-carousel__card.slide-out-left  { animation: carouselSlideOutLeft  0.3s var(--ease-out) forwards; z-index: 2; }
-.rec-carousel__card.slide-in-right  { animation: carouselSlideInRight  0.3s var(--ease-out) forwards; z-index: 3; }
-.rec-carousel__card.slide-out-right { animation: carouselSlideOutRight 0.3s var(--ease-out) forwards; z-index: 2; }
-.rec-carousel__card.slide-in-left   { animation: carouselSlideInLeft   0.3s var(--ease-out) forwards; z-index: 3; }
+.rec-carousel__card.slide-out-left  { position: absolute; inset: 0; animation: carouselSlideOutLeft  0.3s var(--ease-out) forwards; z-index: 2; }
+.rec-carousel__card.slide-in-right  { position: relative; animation: carouselSlideInRight  0.3s var(--ease-out) forwards; z-index: 3; }
+.rec-carousel__card.slide-out-right { position: absolute; inset: 0; animation: carouselSlideOutRight 0.3s var(--ease-out) forwards; z-index: 2; }
+.rec-carousel__card.slide-in-left   { position: relative; animation: carouselSlideInLeft   0.3s var(--ease-out) forwards; z-index: 3; }
 
 /* Carousel navigation */
 .rec-carousel__nav {
@@ -1385,7 +1384,6 @@ body {
   }
   .kpi-grid { grid-template-columns: 1fr; }
   .rec-card__metrics { grid-template-columns: repeat(2, 1fr); }
-  .rec-carousel__viewport { min-height: 600px; }
   .weather-grid { grid-template-columns: 1fr 1fr; }
   .chart-container { height: 260px; }
   .hero__headline { font-size: var(--text-2xl); }
@@ -1400,7 +1398,6 @@ body {
   .hero__actions { flex-direction: column; }
   .hero__actions .btn-hero { width: 100%; justify-content: center; }
   .rec-card__metrics { grid-template-columns: 1fr; }
-  .rec-carousel__viewport { min-height: 720px; }
   .section-header-v2 { flex-direction: column; align-items: flex-start; }
   .chat-panel { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
   .run-strip { flex-wrap: wrap; }
