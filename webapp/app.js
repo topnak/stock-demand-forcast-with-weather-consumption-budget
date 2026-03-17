@@ -15,20 +15,21 @@
   let OUTPUT_BASE    = 'output';
   let AZURE_MAPS_KEY = '';
 
-  // Chart.js palette — Wesfarmers corporate
+  // Chart.js palette — Wesfarmers corporate green
   const COLORS = {
-    blue:     '#1a1a2e',  blueBg:   'rgba(26,26,46,0.08)',
-    navy:     '#C8102E',  navyBg:   'rgba(200,16,46,0.08)',
-    green:    '#059669',  greenBg:  'rgba(5,150,105,0.08)',
+    brand:    '#00843D',  brandBg:  'rgba(0,132,61,0.10)',
+    dark:     '#004225',  darkBg:   'rgba(0,66,37,0.08)',
+    green:    '#16a34a',  greenBg:  'rgba(22,163,74,0.10)',
     red:      '#dc2626',  redBg:    'rgba(220,38,38,0.08)',
     amber:    '#d97706',  amberBg:  'rgba(217,119,6,0.08)',
     grey:     '#6b7280',  greyBg:   'rgba(107,114,128,0.08)',
     teal:     '#0d9488',  tealBg:   'rgba(13,148,136,0.08)',
+    blue:     '#2563eb',  blueBg:   'rgba(37,99,235,0.08)',
     purple:   '#7c3aed',  purpleBg: 'rgba(124,58,237,0.08)'
   };
 
-  const BRANCH_COLORS = [COLORS.blue, COLORS.navy, COLORS.green, COLORS.teal, COLORS.amber, COLORS.purple];
-  const BRANCH_BG     = [COLORS.blueBg, COLORS.navyBg, COLORS.greenBg, COLORS.tealBg, COLORS.amberBg, COLORS.purpleBg];
+  const BRANCH_COLORS = [COLORS.brand, COLORS.teal, COLORS.blue, COLORS.green, COLORS.amber, COLORS.purple];
+  const BRANCH_BG     = [COLORS.brandBg, COLORS.tealBg, COLORS.blueBg, COLORS.greenBg, COLORS.amberBg, COLORS.purpleBg];
 
   // ---- Data fetching --------------------------------------------------------
   async function fetchJSON(base, file) {
@@ -190,7 +191,7 @@
         textField: ['get', 'name'],
         offset: [0, 1.2],
         size: 11,
-        color: '#1a1a2e',
+        color: '#1a1c23',
         font: ['StandardFont-Bold']
       }
     }));
@@ -201,19 +202,19 @@
     map.events.add('mousemove', bubbleLayer, function (e) {
       if (!e.shapes || !e.shapes.length) return;
       var props = e.shapes[0].getProperties();
-      var riskColor = props.risk === 'High' ? '#dc2626' : props.risk === 'Medium' ? '#d97706' : '#059669';
+      var riskColor = props.risk === 'High' ? '#dc2626' : props.risk === 'Medium' ? '#d97706' : '#16a34a';
       popup.setOptions({
         position: e.shapes[0].getCoordinates(),
         content: '<div style="padding:12px 14px;font-family:Inter,sans-serif;font-size:12px;min-width:180px;line-height:1.6">'
           + '<div style="font-weight:700;font-size:13px;margin-bottom:6px">' + props.name + '</div>'
           + '<div style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;color:white;background:' + riskColor + ';margin-bottom:8px">' + props.risk + ' Risk</div>'
           + '<div style="border-top:1px solid #e5e7eb;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">'
-          + '<div><span style="color:#718096">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
-          + '<div><span style="color:#718096">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
-          + '<div><span style="color:#718096">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
-          + '<div><span style="color:#718096">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
+          + '<div><span style="color:#6b7280">Stock</span><br><strong>' + props.stockOnHand + '</strong></div>'
+          + '<div><span style="color:#6b7280">In Transit</span><br><strong>' + props.inTransit + '</strong></div>'
+          + '<div><span style="color:#6b7280">Predicted</span><br><strong>' + props.predicted + '</strong></div>'
+          + '<div><span style="color:#6b7280">Reorder</span><br><strong>' + props.reorderQty + '</strong></div>'
           + '</div>'
-          + '<div style="margin-top:6px;color:#718096">' + props.temp + ' \u2014 ' + props.weather + '</div>'
+          + '<div style="margin-top:6px;color:#6b7280">' + props.temp + ' \u2014 ' + props.weather + '</div>'
           + '</div>'
       });
       popup.open(map);
@@ -227,7 +228,7 @@
   /** Fallback: render a simple HTML list when no Azure Maps key is set. */
   function renderFallbackMap(branches, riskMap) {
     const container = document.getElementById('azureMap');
-    container.style.background = '#f3f4f6';
+    container.style.background = '#f5f6f8';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
@@ -237,17 +238,17 @@
     container.style.overflowY = 'auto';
 
     const note = document.createElement('div');
-    note.style.cssText = 'font-size:0.78rem;color:#718096;margin-bottom:6px;text-align:center;';
+    note.style.cssText = 'font-size:0.78rem;color:#6b7280;margin-bottom:6px;text-align:center;';
     note.textContent = 'Set AZURE_MAPS_KEY in config to enable the interactive map.';
     container.appendChild(note);
 
     branches.forEach(b => {
       const risk = riskMap[b.branch_id];
       const level = risk ? risk.risk_level : 'Low';
-      const dotColor = level === 'High' ? '#dc2626' : level === 'Medium' ? '#d97706' : '#059669';
+      const dotColor = level === 'High' ? '#dc2626' : level === 'Medium' ? '#d97706' : '#16a34a';
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;color:#1a1a2e;';
-      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#718096;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:0.875rem;padding:6px 0;color:#1a1c23;';
+      row.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0"></span><strong>${sanitize(b.branch_name || b.city)}</strong><span style="color:#6b7280;font-size:0.75rem">${sanitize(b.city)} &middot; ${sanitize(level)}</span>`;
       container.appendChild(row);
     });
   }
@@ -730,21 +731,21 @@
             padding: 16,
             usePointStyle: true,
             pointStyle: 'rectRounded',
-            color: '#4a5568'
+            color: '#4b5563'
           }
         }
       },
       scales: {
         x: {
-          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#718096' },
+          ticks: { font: { size: 11, family: "'Inter', sans-serif" }, maxRotation: 45, minRotation: 0, color: '#6b7280' },
           grid: { display: false },
           border: { display: false }
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#718096' },
-          ticks: { font: { size: 11 }, color: '#718096' },
-          grid: { color: 'rgba(0,0,0,0.04)' },
+          title: { display: true, text: yLabel, font: { size: 11, family: "'Inter', sans-serif", weight: '500' }, color: '#6b7280' },
+          ticks: { font: { size: 11 }, color: '#6b7280' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
           border: { display: false }
         }
       }
