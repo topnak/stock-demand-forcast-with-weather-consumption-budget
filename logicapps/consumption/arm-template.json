@@ -1,0 +1,622 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "WesOnline Nightly Stock Planner — Consumption Logic App. Converts the Standard workflow to a Consumption-plan deployment using ARM parameters instead of appsettings, with System-Assigned Managed Identity for blob access."
+  },
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "la-wesonlinephnak",
+      "metadata": { "description": "Name of the Consumption Logic App." }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": { "description": "Azure region for deployment." }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "stwesonlinephnak",
+      "metadata": { "description": "Storage account name (must already exist in same RG)." }
+    },
+    "inputContainer": {
+      "type": "string",
+      "defaultValue": "input"
+    },
+    "outputContainer": {
+      "type": "string",
+      "defaultValue": "output"
+    },
+    "azureMapsKey": {
+      "type": "securestring",
+      "metadata": { "description": "Azure Maps subscription key." }
+    },
+    "openaiEndpoint": {
+      "type": "string",
+      "defaultValue": "https://openai-wesonlinephnak.openai.azure.com",
+      "metadata": { "description": "Azure OpenAI endpoint URL." }
+    },
+    "openaiApiKey": {
+      "type": "securestring",
+      "metadata": { "description": "Azure OpenAI API key." }
+    },
+    "openaiDeployment": {
+      "type": "string",
+      "defaultValue": "gpt-4o",
+      "metadata": { "description": "Azure OpenAI deployment name." }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "storageAccountName": { "type": "string" },
+            "inputContainer": { "type": "string" },
+            "outputContainer": { "type": "string" },
+            "azureMapsKey": { "type": "securestring" },
+            "openaiEndpoint": { "type": "string" },
+            "openaiApiKey": { "type": "securestring" },
+            "openaiDeployment": { "type": "string" }
+          },
+          "triggers": {
+            "Recurrence_03AM_Sydney": {
+              "type": "Recurrence",
+              "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "schedule": {
+                  "hours": [ "3" ],
+                  "minutes": [ "0" ]
+                },
+                "timeZone": "AUS Eastern Standard Time"
+              }
+            }
+          },
+          "actions": {
+
+            "Initialize_branchInputs": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "branchInputs",
+                    "type": "array",
+                    "value": []
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+
+            "Initialize_runId": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "runId",
+                    "type": "string",
+                    "value": "@{concat('run-', formatDateTime(utcNow(), 'yyyyMMdd-HHmmss'))}"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialize_branchInputs": [ "Succeeded" ]
+              }
+            },
+
+            "Get_branches": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('inputContainer'), '/branches.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Initialize_runId": [ "Succeeded" ]
+              }
+            },
+
+            "Parse_branches": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_branches')",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "branch_id":   { "type": "string" },
+                      "branch_name": { "type": "string" },
+                      "city":        { "type": "string" },
+                      "state":       { "type": "string" },
+                      "latitude":    { "type": "number" },
+                      "longitude":   { "type": "number" },
+                      "store_type":  { "type": "string" }
+                    },
+                    "required": [ "branch_id", "branch_name", "city", "latitude", "longitude" ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_branches": [ "Succeeded" ]
+              }
+            },
+
+            "Get_sales_recent": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('inputContainer'), '/sales_recent.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Initialize_runId": [ "Succeeded" ]
+              }
+            },
+
+            "Parse_sales": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_sales_recent')",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "branch_id":  { "type": "string" },
+                      "date":       { "type": "string" },
+                      "units_sold": { "type": "integer" }
+                    },
+                    "required": [ "branch_id", "date", "units_sold" ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_sales_recent": [ "Succeeded" ]
+              }
+            },
+
+            "Get_inventory": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('inputContainer'), '/inventory_latest.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Initialize_runId": [ "Succeeded" ]
+              }
+            },
+
+            "Parse_inventory": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_inventory')",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "branch_id":        { "type": "string" },
+                      "sku_id":           { "type": "string" },
+                      "stock_on_hand":    { "type": "integer" },
+                      "in_transit":       { "type": "integer" },
+                      "safety_stock":     { "type": "integer" },
+                      "avg_daily_sales":  { "type": "number" }
+                    },
+                    "required": [ "branch_id", "stock_on_hand", "in_transit", "safety_stock", "avg_daily_sales" ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Get_inventory": [ "Succeeded" ]
+              }
+            },
+
+            "For_each_branch": {
+              "type": "Foreach",
+              "foreach": "@body('Parse_branches')",
+              "actions": {
+
+                "Filter_sales_for_branch": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Parse_sales')",
+                    "where": "@equals(item()['branch_id'], items('For_each_branch')['branch_id'])"
+                  },
+                  "runAfter": {}
+                },
+
+                "Filter_inventory_for_branch": {
+                  "type": "Query",
+                  "inputs": {
+                    "from": "@body('Parse_inventory')",
+                    "where": "@equals(item()['branch_id'], items('For_each_branch')['branch_id'])"
+                  },
+                  "runAfter": {}
+                },
+
+                "compose_stock_on_hand": {
+                  "type": "Compose",
+                  "inputs": "@if(greater(length(body('Filter_inventory_for_branch')), 0), first(body('Filter_inventory_for_branch'))['stock_on_hand'], 0)",
+                  "runAfter": {
+                    "Filter_inventory_for_branch": [ "Succeeded" ]
+                  }
+                },
+
+                "Compose_in_transit": {
+                  "type": "Compose",
+                  "inputs": "@if(greater(length(body('Filter_inventory_for_branch')), 0), first(body('Filter_inventory_for_branch'))['in_transit'], 0)",
+                  "runAfter": {
+                    "Filter_inventory_for_branch": [ "Succeeded" ]
+                  }
+                },
+
+                "Compose_safety_stock": {
+                  "type": "Compose",
+                  "inputs": "@if(greater(length(body('Filter_inventory_for_branch')), 0), first(body('Filter_inventory_for_branch'))['safety_stock'], 0)",
+                  "runAfter": {
+                    "Filter_inventory_for_branch": [ "Succeeded" ]
+                  }
+                },
+
+                "HTTP_Get_Weather": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "https://atlas.microsoft.com/weather/forecast/daily/json",
+                    "queries": {
+                      "api-version": "1.1",
+                      "query": "@{items('For_each_branch')['latitude']},@{items('For_each_branch')['longitude']}",
+                      "duration": "1",
+                      "subscription-key": "@parameters('azureMapsKey')"
+                    }
+                  },
+                  "runAfter": {}
+                },
+
+                "compose_maxTemp": {
+                  "type": "Compose",
+                  "inputs": "@body('HTTP_Get_Weather')['forecasts'][0]['temperature']['maximum']['value']",
+                  "runAfter": {
+                    "HTTP_Get_Weather": [ "Succeeded" ]
+                  }
+                },
+
+                "compose_weather_condition": {
+                  "type": "Compose",
+                  "inputs": "@body('HTTP_Get_Weather')['forecasts'][0]['day']['shortPhrase']",
+                  "runAfter": {
+                    "HTTP_Get_Weather": [ "Succeeded" ]
+                  }
+                },
+
+                "Compose_avg7_value": {
+                  "type": "Compose",
+                  "inputs": "@if(greater(length(body('Filter_inventory_for_branch')), 0), first(body('Filter_inventory_for_branch'))['avg_daily_sales'], 0)",
+                  "description": "Reads pre-computed 7-day average daily sales from inventory_latest.json.",
+                  "runAfter": {
+                    "Filter_inventory_for_branch": [ "Succeeded" ]
+                  }
+                },
+
+                "Compose_predicted_units": {
+                  "type": "Compose",
+                  "inputs": "@if(greater(float(outputs('compose_maxTemp')), 30), mul(float(string(outputs('Compose_avg7_value'))), 1.22), if(greaterOrEquals(float(outputs('compose_maxTemp')), 27), mul(float(string(outputs('Compose_avg7_value'))), 1.12), float(string(outputs('Compose_avg7_value')))))",
+                  "description": "Baseline demand forecast: avg7 * uplift. >30C = +22%, >=27C = +12%, else no uplift.",
+                  "runAfter": {
+                    "Compose_avg7_value": [ "Succeeded" ],
+                    "compose_maxTemp": [ "Succeeded" ]
+                  }
+                },
+
+                "Append_to_branchInputs": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "branchInputs",
+                    "value": {
+                      "branch_id": "@{items('For_each_branch')['branch_id']}",
+                      "branch_name": "@{items('For_each_branch')['branch_name']}",
+                      "city": "@{items('For_each_branch')['city']}",
+                      "latitude": "@{items('For_each_branch')['latitude']}",
+                      "longitude": "@{items('For_each_branch')['longitude']}",
+                      "stock_on_hand": "@outputs('compose_stock_on_hand')",
+                      "in_transit": "@outputs('Compose_in_transit')",
+                      "safety_stock": "@outputs('Compose_safety_stock')",
+                      "recent_7_day_avg_sales": "@outputs('Compose_avg7_value')",
+                      "tomorrow_max_temp_c": "@outputs('compose_maxTemp')",
+                      "weather_condition": "@outputs('compose_weather_condition')",
+                      "baseline_forecast_units": "@outputs('Compose_predicted_units')"
+                    }
+                  },
+                  "runAfter": {
+                    "compose_stock_on_hand": [ "Succeeded" ],
+                    "Compose_in_transit": [ "Succeeded" ],
+                    "Compose_safety_stock": [ "Succeeded" ],
+                    "Compose_predicted_units": [ "Succeeded" ],
+                    "compose_weather_condition": [ "Succeeded" ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Parse_branches": [ "Succeeded" ],
+                "Parse_sales": [ "Succeeded" ],
+                "Parse_inventory": [ "Succeeded" ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            },
+
+            "Compose_forecast_output": {
+              "type": "Compose",
+              "inputs": "@variables('branchInputs')",
+              "runAfter": {
+                "For_each_branch": [ "Succeeded" ]
+              }
+            },
+
+            "Agent_Replenishment_Planner": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('openaiEndpoint')}/openai/deployments/@{parameters('openaiDeployment')}/chat/completions?api-version=2024-08-01-preview",
+                "headers": {
+                  "Content-Type": "application/json",
+                  "api-key": "@{parameters('openaiApiKey')}"
+                },
+                "body": {
+                  "messages": [
+                    {
+                      "role": "system",
+                      "content": "You are a replenishment planning agent for WesOnline, an Australian electronics retailer operating 6 stores across major cities. The primary product is the Pedestal Electric Fan 40cm (SKU: EF001). Demand for electric fans is strongly driven by temperature — hotter days mean significantly more sales.\n\n## YOUR ROLE\nEvery night at 03:00 AM AEST, you evaluate each branch's stock position and determine whether a reorder is required for the next trading day.\n\n## INPUT FORMAT\nYou receive a JSON array called branchInputs. Each object contains:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- stock_on_hand (integer) — current physical stock in units\n- in_transit (integer) — stock already ordered and en route\n- safety_stock (integer) — minimum buffer that should be maintained\n- recent_7_day_avg_sales (number) — average daily units sold over last 7 days\n- tomorrow_max_temp_c (number) — forecasted maximum temperature in Celsius\n- weather_condition (string) — e.g. \"Sunny\", \"Partly Cloudy\"\n- baseline_forecast_units (number) — deterministic demand prediction (already includes weather uplift)\n\n## DECISION LOGIC\nFor each branch, calculate:\n1. available_stock = stock_on_hand + in_transit\n2. stock_gap = baseline_forecast_units - available_stock\n3. safety_buffer = available_stock - safety_stock\n\nRisk classification:\n- HIGH: stock_gap > 0 AND safety_buffer < 20\n- MEDIUM: stock_gap > 0 BUT safety_buffer >= 20, OR stock_gap <= 0 BUT safety_buffer < 10\n- LOW: available_stock comfortably covers baseline_forecast_units with adequate safety buffer\n\nReorder decision:\n- If risk is HIGH: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 20\n- If risk is MEDIUM: reorder_needed = true, recommended_order_qty = round stock_gap UP to next multiple of 10, minimum 10\n- If risk is LOW: reorder_needed = false, recommended_order_qty = 0\n\n## RULES\n- Be CONSERVATIVE. Do not over-order.\n- ALWAYS use the provided baseline_forecast_units. Never invent your own demand estimate.\n- Order quantities MUST be multiples of 10.\n- Mention the temperature and its impact on fan demand in the explanation.\n- Mention stock_on_hand vs predicted demand in the explanation.\n- Keep explanations to 1-2 sentences.\n\n## OUTPUT FORMAT\nReturn ONLY a valid JSON array. No markdown fences, no commentary outside the array.\n\nEach element must contain exactly these fields:\n- branch_id (string)\n- branch_name (string)\n- city (string)\n- risk_level (\"High\", \"Medium\", or \"Low\")\n- reorder_needed (boolean)\n- recommended_order_qty (integer, multiples of 10, 0 if not needed)\n- confidence (\"High\", \"Medium\", or \"Low\")\n- explanation (string — 1-2 sentence justification mentioning temperature and stock position)"
+                    },
+                    {
+                      "role": "user",
+                      "content": "Evaluate the following branches and return replenishment recommendations as a JSON array:\n\n@{string(variables('branchInputs'))}"
+                    }
+                  ],
+                  "temperature": 0.2,
+                  "max_tokens": 4000
+                }
+              },
+              "runAfter": {
+                "Compose_forecast_output": [ "Succeeded" ]
+              },
+              "description": "Calls Azure OpenAI chat completions API directly via HTTP."
+            },
+
+            "Parse_agent_response": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@json(trim(body('Agent_Replenishment_Planner')['choices'][0]['message']['content']))",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "branch_id":             { "type": "string" },
+                      "branch_name":           { "type": "string" },
+                      "city":                  { "type": "string" },
+                      "risk_level":            { "type": "string" },
+                      "reorder_needed":        { "type": "boolean" },
+                      "recommended_order_qty": { "type": "integer" },
+                      "confidence":            { "type": "string" },
+                      "explanation":           { "type": "string" }
+                    },
+                    "required": [ "branch_id", "risk_level", "reorder_needed", "recommended_order_qty" ]
+                  }
+                }
+              },
+              "runAfter": {
+                "Agent_Replenishment_Planner": [ "Succeeded" ]
+              }
+            },
+
+            "Compose_operator_summary": {
+              "type": "Compose",
+              "inputs": {
+                "generated_at": "@{utcNow()}",
+                "run_id": "@{variables('runId')}",
+                "branches_evaluated": "@{length(variables('branchInputs'))}",
+                "total_recommended_qty": 0,
+                "summary": "Nightly stock planner completed. Review replenishment_output.json for branch-level recommendations."
+              },
+              "description": "PORTAL NOTE: total_recommended_qty should ideally sum recommended_order_qty from the parsed agent response. Logic Apps lacks native array sum; use an inline code action or set to 0.",
+              "runAfter": {
+                "Parse_agent_response": [ "Succeeded" ]
+              }
+            },
+
+            "Write_forecast_output": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('outputContainer'), '/forecast_output.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02",
+                  "x-ms-blob-type": "BlockBlob",
+                  "Content-Type": "application/json"
+                },
+                "body": "@outputs('Compose_forecast_output')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Parse_agent_response": [ "Succeeded" ]
+              }
+            },
+
+            "Write_replenishment_output": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('outputContainer'), '/replenishment_output.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02",
+                  "x-ms-blob-type": "BlockBlob",
+                  "Content-Type": "application/json"
+                },
+                "body": "@body('Parse_agent_response')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Parse_agent_response": [ "Succeeded" ]
+              }
+            },
+
+            "Write_operator_summary": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('outputContainer'), '/operator_summary.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02",
+                  "x-ms-blob-type": "BlockBlob",
+                  "Content-Type": "application/json"
+                },
+                "body": "@outputs('Compose_operator_summary')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Compose_operator_summary": [ "Succeeded" ]
+              }
+            },
+
+            "Read_existing_workflow_runs": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('outputContainer'), '/workflow_runs.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Parse_agent_response": [ "Succeeded" ]
+              }
+            },
+
+            "Compose_existing_runs": {
+              "type": "Compose",
+              "inputs": "@if(equals(actions('Read_existing_workflow_runs')['status'], 'Succeeded'), body('Read_existing_workflow_runs'), json('[]'))",
+              "runAfter": {
+                "Read_existing_workflow_runs": [ "Succeeded", "Failed" ]
+              }
+            },
+
+            "Compose_new_run_entry": {
+              "type": "Compose",
+              "inputs": {
+                "run_id": "@{variables('runId')}",
+                "logic_app_run_id": "@{workflow().run.name}",
+                "started_at": "@{utcNow()}",
+                "status": "Succeeded",
+                "branches_evaluated": "@{length(variables('branchInputs'))}",
+                "flagged_branches": "@{length(body('Parse_agent_response'))}",
+                "portal_url": "@{concat('https://portal.azure.com/#blade/Microsoft.Logic/LogicAppRunBlade/id/%2Fsubscriptions%2F41da8f32-f7b0-496d-aa3b-d150afea583a%2FresourceGroups%2Fwesonlinephnak%2Fproviders%2FMicrosoft.Logic%2Fworkflows%2Fla-wesonlinephnak%2Fruns%2F', workflow().run.name)}"
+              },
+              "runAfter": {
+                "Compose_existing_runs": [ "Succeeded" ]
+              }
+            },
+
+            "Compose_updated_runs": {
+              "type": "Compose",
+              "inputs": "@union(createArray(outputs('Compose_new_run_entry')), take(outputs('Compose_existing_runs'), 19))",
+              "description": "Prepend new run, keep last 20 total.",
+              "runAfter": {
+                "Compose_new_run_entry": [ "Succeeded" ]
+              }
+            },
+
+            "Write_workflow_runs": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@{concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('outputContainer'), '/workflow_runs.json')}",
+                "headers": {
+                  "x-ms-version": "2020-10-02",
+                  "x-ms-blob-type": "BlockBlob",
+                  "Content-Type": "application/json"
+                },
+                "body": "@outputs('Compose_updated_runs')",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              },
+              "runAfter": {
+                "Compose_updated_runs": [ "Succeeded" ]
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "storageAccountName": { "value": "[parameters('storageAccountName')]" },
+          "inputContainer": { "value": "[parameters('inputContainer')]" },
+          "outputContainer": { "value": "[parameters('outputContainer')]" },
+          "azureMapsKey": { "value": "[parameters('azureMapsKey')]" },
+          "openaiEndpoint": { "value": "[parameters('openaiEndpoint')]" },
+          "openaiApiKey": { "value": "[parameters('openaiApiKey')]" },
+          "openaiDeployment": { "value": "[parameters('openaiDeployment')]" }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "principalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '2019-05-01', 'Full').identity.principalId]"
+    },
+    "logicAppResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]"
+    }
+  }
+}

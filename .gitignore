@@ -3,11 +3,18 @@ node_modules/
 
 # Environment and secrets
 .env
+.env.*
+!.env.example
 webapp/.env
 webapp/env.js
 
 # Logic Apps local settings (contains connection strings and keys)
 logicapps/**/local.settings.json
+logicapps/**/local.settings.*.json
+!logicapps/**/local.settings.example.json
+
+# ARM parameter files with secrets
+logicapps/consumption/arm-parameters.*.json
 
 # OS files
 .DS_Store
